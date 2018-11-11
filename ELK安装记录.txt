@@ -1,0 +1,85 @@
+
+安装1
+
+1）下载并安装GPG Key
+[root@elk-node1 ~]# rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
+
+2）添加yum仓库
+[root@elk-node1 ~]# vim /etc/yum.repos.d/elasticsearch.repo
+
+[elasticsearch-2.x]
+name=Elasticsearch repository for 2.x packages
+baseurl=http://packages.elastic.co/elasticsearch/2.x/centos
+gpgcheck=1
+gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+
+1、更新yum的缓存
+# yum makecache
+
+3）安装elasticsearch
+[root@elk-node1 ~]# yum install -y elasticsearch
+
+4）安装相关测试软件
+#提前先下载安装epel源：epel-release-latest-7.noarch.rpm，否则yum会报错:No Package.....
+[root@elk-node1 ~]# wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+[root@elk-node1 ~]# rpm -ivh epel-release-latest-7.noarch.rpm
+
+
+
+安装2
+
+# yum install java*
+#vim /etc/profile
+在尾部加上
+export JAVA_HOME=/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.91.x86_64
+export CLASSPATH=.:$JAVA_HOME/jre/lib/rt.jar:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+export PATH=$PATH:$JAVA_HOME/bin
+
+# source /etc/profile
+
+---------------------------------------
+这个命令避免对java不熟悉的开发人员的误操作，能够避免学习繁杂的知识点。这个命令也是保证jvm是比较新的版本，官网上说最好是1.8.0_73的版本（We recommend installing Java version 1.8.0_73 or later）。官网也有各种安装方法（点击这里查看），这里提供的是yum安装。
+1、下载并安装ES的yum公钥
+#rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
+
+2、配置ES的yum源
+
+# vim /etc/yum.repos.d/elasticsearch.repo
+输入下面的内容：
+[elasticsearch-2.x]
+name=Elasticsearch repository for 2.x packages
+baseurl=http://packages.elastic.co/elasticsearch/2.x/centos
+gpgcheck=1
+gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
+enabled=1
+二、yum安装ES
+1、更新yum的缓存
+# yum makecache
+2、安装ES
+# yum install elasticsearch
+三、测试ES
+1、配置和启动ES服务器进程
+# /sbin/chkconfig --add elasticsearch
+# systemctl start elasticsearch
+2、运行测试
+# curl -X GET localhost:9200
+
+四、通过IP访问ES的配置
+vim /etc/elasticsearch/elasticsearch.yml
+
+55行的
+network.host 0.0.0.0
+http.port: 9200
+
+
+http://45.115.243.24:9200/
+
+插件安装
+
+/usr/share/elasticsearch/bin/plugin install mobz/elasticsearch-head
+
+http://45.115.243.24:9200/_plugin/head/
+
+
+https://www.cnblogs.com/miao-zp/p/6006595.html
