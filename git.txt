@@ -7,3 +7,20 @@ git remote add origin https://github.com/zsl245305579/zsl-web.git
 
 
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDlFPAK3T6f0D7pkfpWIAzuvWdEyOy8lKrMEGXpyzP+4FAceGrN1Fs0okf3tBBg1ftTZnz8trSQAe4YOx3sBiDbl8nUkPLv8TgbjEIcQU7pQCmldVcc+oLo5fB7UFdXDuBQIJFBkG1Dy8qe0dQt8JVrTdOVYBv3M18j4MYLH/S0QWeOrqJBTrUHcclq0qcPS4CY7dS5b0P2Sed3SwmrwIoFhkDI+qoo5KIlkMVxiAE7E8RPZFSsSIYkl9EApVp6h9nZEwz/aySdSCDvvfQG8J6moC9YvNkQCkwC5KxzhjcS1nvEVIX76ii+FVxKNq/AU6aciADQuuD5xcej4E7BRZm9 Administrator@PRC-20180320LHX
+
+
+git reflog
+
+git reset --hard 4720c83
+
+git branch fz2
+
+git branch -V
+
+git branch fz2
+
+git merge branch fz2
+
+如果冲突就修改后不指定文件提交再合并
+
+
