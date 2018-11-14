@@ -1,0 +1,191 @@
+
+1.最大线程数，打开的太低，需要增加线程数
+vi /etc/security/limits.d/90-nproc.conf
+* soft nproc 2048
+
+
+[root@elk ~]# ulimit -SHn 65536
+注：
+	-S 设置软件资源限制
+	-H 设置硬件资源限制
+	-n 设置内核可以同时可以打开文件描述符
+
+#在文件最后添加
+[root@elk ~]# vi /etc/security/limits.conf
+* soft nofile 65536
+* hard nofile 131072
+* soft nproc 2048
+* hard nproc 4096
+
+分为3中类型type（有 soft，hard 和 -）
+		soft是指当前系统生效的设置值
+		hard 系统设置的最大值
+-同时设置了soft和hard的值
+nofile - 打开文件的最大数目
+noproc - 进程的最大数目
+soft<=hard soft的限制不能比hard限制高
+
+
+2.打开虚拟内存的个数太少需要增加
+
+#在文件末尾添加
+[root@elk ~]# vi /etc/sysctl.conf
+vm.max_map_count=655360
+#生效下
+[root@elk ~]#sysctl -p
+注：
+vm.max_map_count文件允许max_map_count限制虚拟内存的数量
+
+
+
+2.3.1 安装redis
+#创建安装目录
+[root@elk yum.repos.d]#mkdir -pv /data/application/
+[root@elk yum.repos.d]#wget http://download.redis.io/releases/redis-3.0.5.tar.gz
+#编译并进行安装
+[root@elk ~]# tar zxf redis-3.0.5.tar.gz && cd redis-3.0.5
+[root@elk redis-3.0.5]# make PREFIX=/data/application/redis-3.0.5 install
+#创建配置文件目录
+[root@elk redis-3.0.5]#mkdir /data/application/redis-3.0.5/{etc,run,log}
+#修改redis.conf
+[root@elk redis-3.0.5]#vi /data/application/redis-3.0.5/etc/redis.conf
+
+daemonize yes	#后台模式运行
+pidfile /data/application/redis-3.0.5/run/redis.pid	#redis的pid
+bind 192.168.201.135   #这里根据自己的ip填写
+port 6379	#端口
+logfile "/data/application/redis-3.0.5/log/redis.log" #log存放位置
+dir /data/application/redis-3.0.5
+
+/data/application/redis-3.0.5/bin/redis-server /data/application/redis-3.0.5/etc/redis.conf
+
+lsof -i:6379
+
+
+2.3.2 安装jdk
+#卸载系统自带jdk
+#查看系统自带jdk
+[root@elk elk_pack]#rpm -qa|grep java
+#卸载
+[root@elk elk_pack]#yum remove java-1.8.0-openjdk
+[root@elk elk_pack]#yum remove java-1.7.0-openjdk
+#解压
+[root@elk elk_pack]# tar zxvf jdk-8u91-linux-x64.tar.gz -C /data/application/
+#注：
+	-C 指定解压到指定的路径
+#配置jdk环境变量
+#全局配置
+[root@elk jdk1.8.0_91]# vi /etc/profile.d/java.sh 
+export JAVA_HOME=/data/application/jdk1.8.0_91/
+export PATH=$JAVA_HOME/bin:$PATH
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+[root@elk jdk1.8.0_91]#source /etc/profile.d/java.sh
+#查看版本
+[root@elk jdk1.8.0_91]#java -version
+java version "1.8.0_91"#出现这个证明成功
+Java(TM) SE Runtime Environment (build 1.8.0_91-b14)
+Java HotSpot(TM) 64-Bit Server VM (build 25.91-b14, mixed mode)
+
+
+安装elasticsearch
+
+
+[root@localhost application]# adduser  -s /bin/bash -c 'elk' -m -d /home/elk elk
+注：从2.0开始不能用root用户启动需要elk用户启动
+#解压
+[root@elk elk_pack]# tar zxvf elasticsearch-5.2.0.tar.gz -C /data/application/
+注：
+	Elasticsearch是不需要编译的，解压就可以使用
+#修改配置文件
+#备份配置文件
+[root@elk ~]# cp /data/application/elasticsearch-5.2.0/config/elasticsearch.yml{,.ori}
+#找到以下几行修改
+[root@elk config]# vi elasticsearch.yml
+
+path.data: /data/shuju			----》存放数据路径
+path.logs: /data/logs            -----》日志路径
+network.host: 192.168.201.137   -----》根据自己的ip修改
+http.port: 9200 
+
+#创建los,shuju
+[root@elk config]#mkdir /data/{shuju,logs}
+#启动elasticsearch
+#修改elasticsearch权限
+[root@elk ~]#chown -R elk.elk /data/application/elasticsearch-5.2.0/
+[root@elk ~]#chown -R elk.elk /data/{shuju,logs}
+[root@elk ~]# su – elk
+[elk@elk ~]$/data/application/elasticsearch-5.2.0/bin/elasticsearch
+注：
+	如果执行完这个脚本，中途没有退出，说明启动成功
+
+
+#测试是否成功
+[root@elk ~]# curl 192.168.201.135:9200
+{
+  "name" : "z8htm2J",
+  "cluster_name" : "elasticsearch",
+  "cluster_uuid" : "wEbF7BwgSe-0vFyHb1titQ",
+  "version" : {
+    "number" : "5.3.0",
+    "build_hash" : "3adb13b",
+    "build_date" : "2017-03-23T03:31:50.652Z",
+    "build_snapshot" : false,
+    "lucene_version" : "6.4.1"
+  },
+  "tagline" : "You Know, for Search"
+}
+出现以上情况，证明elasticsearch可以正常使用
+
+
+2.4.3 安装Logstash
+#解压
+[root@elk elk_pack]# tar zxvf logstash-5.2.0.tar.gz  -C /data/application/
+注：
+
+[root@elk ~]# /data/application/logstash-5.2.0/bin/logstash -e 'input { stdin { } } output {stdout {} }'
+
+
+2.4.4 安装Kibana
+#解压
+[root@elk elk_pack]# tar zxvf kibana-5.2.0-linux-x86_64.tar.gz  -C /data/application/
+注：
+Kibana是不需要编译的，解压就可以使用
+
+#修改配置kibana.yml文件
+#cd kibana这个目录
+[root@elk ~]# cd /data/application/kibana-5.2.0/config/
+#找到以下几行修改
+[root@elk config]# egrep -v "^$|^[#]" kibana.yml
+server.port: 5601				#kibana的端口
+server.host: "192.168.201.135"	#访问kibana的ip地址
+elasticsearch.url: "http://192.168.201.135:9200"	 #elasticsearch的ip地址
+kibana.index: ".kibana"		#创建索引
+
+
+#测试是否启动成功
+[root@192 ~]# /data/application/kibana-5.2.0/bin/kibana
+
+[root@elk shuju]# lsof -i:5601
+#通过web访问
+http://192.168.201.135:5601
+
+
+#测试语法是否有问题
+[root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf  -t
+
+#启动
+[root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf 
+
+#在agent端启动logstash
+[root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf 
+
+#查看redis中的数据
+[root@client~]#/data/application/redis-3.0.5/bin/redis-cli  -h 192.168.201.137
+192.168.201.137:6379> keys *
+1) "nginx_access"
+
+#在agent执行，，让nginx产生数据源
+[root@localhost ~]# curl localhost
+hello ansible install nginx
+#查看下agent端采集的数据
+[root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf
