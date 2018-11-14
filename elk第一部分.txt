@@ -1,0 +1,33 @@
+63上5个包
+[root@web63 ~]# ls
+anaconda-ks.cfg  elasticsearch-5.2.0.tar.gz  jdk-8u91-linux-x64.tar.gz  kibana-5.2.0-linux-x86_64.tar.gz  logstash-5.2.0.tar.gz  redis-3.0.5.tar.gz
+
+64上两个包
+
+[root@nfs65 ~]# ls
+jdk-8u91-linux-x64.tar.gz  logstash-5.2.0.tar.gz
+
+
+cat /etc/sysconfig/selinux
+
+
+2.2.2 修改主机名
+#永久修改
+[root@elk ~]#hostnamectl set-hostname elk.server.com
+
+[root@elk ~]#cat /etc/hosts
+192.168.201.135 elk.server.com
+2.2.3 关闭firewall
+iptables -F && systemctl stop firewalld.service && systemctl disable firewalld.service
+
+2.2.4 同步时间
+#首先修改时区亚洲
+#查看时区
+[root@192 config]# ls -l /etc/localtime
+lrwxrwxrwx. 1 root root 38 Apr 13 18:08 /etc/localtime -> ../usr/share/zoneinfo/America/New_York
+#删除link
+rm /etc/localtime
+ln -vs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+yum install ntpdate -y
+[root@elk yum.repos.d]# ntpdate time.nist.gov
+10 Apr 11:00:04 ntpdate[40122]: step time server 216.229.0.179 offset 53747.856066 sec

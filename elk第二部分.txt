@@ -1,5 +1,6 @@
 
 1.最大线程数，打开的太低，需要增加线程数
+vi /etc/security/limits.d/20-nproc.conf
 vi /etc/security/limits.d/90-nproc.conf
 * soft nproc 2048
 
@@ -31,7 +32,7 @@ soft<=hard soft的限制不能比hard限制高
 #在文件末尾添加
 [root@elk ~]# vi /etc/sysctl.conf
 vm.max_map_count=655360
-#生效下
+
 [root@elk ~]#sysctl -p
 注：
 vm.max_map_count文件允许max_map_count限制虚拟内存的数量
@@ -44,21 +45,29 @@ vm.max_map_count文件允许max_map_count限制虚拟内存的数量
 [root@elk yum.repos.d]#wget http://download.redis.io/releases/redis-3.0.5.tar.gz
 #编译并进行安装
 [root@elk ~]# tar zxf redis-3.0.5.tar.gz && cd redis-3.0.5
+yum install -y cmake gcc gcc-c++
+
+编译报错就执行下面error: jemalloc/jemalloc.h: No such file or directory
+make MALLOC=libc
+
 [root@elk redis-3.0.5]# make PREFIX=/data/application/redis-3.0.5 install
 #创建配置文件目录
 [root@elk redis-3.0.5]#mkdir /data/application/redis-3.0.5/{etc,run,log}
+cp /root/redis-3.0.5/redis.conf /data/application/redis-3.0.5/etc/
 #修改redis.conf
 [root@elk redis-3.0.5]#vi /data/application/redis-3.0.5/etc/redis.conf
 
 daemonize yes	#后台模式运行
 pidfile /data/application/redis-3.0.5/run/redis.pid	#redis的pid
-bind 192.168.201.135   #这里根据自己的ip填写
+bind 0.0.0.0   #这里根据自己的ip填写
 port 6379	#端口
 logfile "/data/application/redis-3.0.5/log/redis.log" #log存放位置
 dir /data/application/redis-3.0.5
 
+egrep -v "^$|#" /data/application/redis-3.0.5/etc/redis.conf
 /data/application/redis-3.0.5/bin/redis-server /data/application/redis-3.0.5/etc/redis.conf
 
+yum install lsof
 lsof -i:6379
 
 
@@ -71,20 +80,14 @@ lsof -i:6379
 [root@elk elk_pack]#yum remove java-1.7.0-openjdk
 #解压
 [root@elk elk_pack]# tar zxvf jdk-8u91-linux-x64.tar.gz -C /data/application/
-#注：
-	-C 指定解压到指定的路径
-#配置jdk环境变量
-#全局配置
 [root@elk jdk1.8.0_91]# vi /etc/profile.d/java.sh 
 export JAVA_HOME=/data/application/jdk1.8.0_91/
 export PATH=$JAVA_HOME/bin:$PATH
 export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
 [root@elk jdk1.8.0_91]#source /etc/profile.d/java.sh
-#查看版本
+
 [root@elk jdk1.8.0_91]#java -version
-java version "1.8.0_91"#出现这个证明成功
-Java(TM) SE Runtime Environment (build 1.8.0_91-b14)
-Java HotSpot(TM) 64-Bit Server VM (build 25.91-b14, mixed mode)
+
 
 
 安装elasticsearch
@@ -100,7 +103,7 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.91-b14, mixed mode)
 #备份配置文件
 [root@elk ~]# cp /data/application/elasticsearch-5.2.0/config/elasticsearch.yml{,.ori}
 #找到以下几行修改
-[root@elk config]# vi elasticsearch.yml
+[root@elk config]# vi /data/application/elasticsearch-5.2.0/config/elasticsearch.yml
 
 path.data: /data/shuju			----》存放数据路径
 path.logs: /data/logs            -----》日志路径
@@ -113,14 +116,16 @@ http.port: 9200
 #修改elasticsearch权限
 [root@elk ~]#chown -R elk.elk /data/application/elasticsearch-5.2.0/
 [root@elk ~]#chown -R elk.elk /data/{shuju,logs}
-[root@elk ~]# su – elk
+[root@elk ~]# su elk
 [elk@elk ~]$/data/application/elasticsearch-5.2.0/bin/elasticsearch
+
+/data/application/elasticsearch-5.2.0/bin/elasticsearch -d
 注：
 	如果执行完这个脚本，中途没有退出，说明启动成功
 
 
 #测试是否成功
-[root@elk ~]# curl 192.168.201.135:9200
+[root@elk ~]# curl 192.168.1.63:9200
 {
   "name" : "z8htm2J",
   "cluster_name" : "elasticsearch",
@@ -148,26 +153,26 @@ http.port: 9200
 2.4.4 安装Kibana
 #解压
 [root@elk elk_pack]# tar zxvf kibana-5.2.0-linux-x86_64.tar.gz  -C /data/application/
-注：
-Kibana是不需要编译的，解压就可以使用
+
 
 #修改配置kibana.yml文件
 #cd kibana这个目录
-[root@elk ~]# cd /data/application/kibana-5.2.0/config/
+[root@elk ~]# cd /data/application/kibana-5.2.0-linux-x86_64/config/
 #找到以下几行修改
 [root@elk config]# egrep -v "^$|^[#]" kibana.yml
+vi /data/application/kibana-5.2.0-linux-x86_64/config/kibana.yml
 server.port: 5601				#kibana的端口
-server.host: "192.168.201.135"	#访问kibana的ip地址
-elasticsearch.url: "http://192.168.201.135:9200"	 #elasticsearch的ip地址
+server.host: "192.168.1.63"	#访问kibana的ip地址
+elasticsearch.url: "http://192.168.1.63:9200"	 #elasticsearch的ip地址
 kibana.index: ".kibana"		#创建索引
 
 
 #测试是否启动成功
-[root@192 ~]# /data/application/kibana-5.2.0/bin/kibana
+[root@192 ~]# /data/application/kibana-5.2.0-linux-x86_64/bin/kibana
 
 [root@elk shuju]# lsof -i:5601
 #通过web访问
-http://192.168.201.135:5601
+http://192.168.1.63:5601
 
 
 #测试语法是否有问题
@@ -180,7 +185,7 @@ http://192.168.201.135:5601
 [root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf 
 
 #查看redis中的数据
-[root@client~]#/data/application/redis-3.0.5/bin/redis-cli  -h 192.168.201.137
+[root@client~]#/data/application/redis-3.0.5/bin/redis-cli  -h 192.168.1.63
 192.168.201.137:6379> keys *
 1) "nginx_access"
 
@@ -189,3 +194,84 @@ http://192.168.201.135:5601
 hello ansible install nginx
 #查看下agent端采集的数据
 [root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf
+
+
+
+
+#安装Logstash
+这里安装logstash和在服务端安装logstash方式一样，区别在于配置文件有区别，这里是采集数据
+请参考服务端的安装方式
+#创建agent目录
+#方便管理文件，把采集数据的文件统一放到一个目录中管理
+[root@localhost logstash-5.2.0]# mkdir agent_conf
+#cd to agent_conf
+[root@localhost logstash-5.2.0]# cd agent_conf/
+
+
+#创建采集数据的文件
+[root@localhost agent_conf]# cat nginx-agent.conf 
+input {
+    file {
+        path => ["/var/log/nginx/hxopensource-access.log"]
+        type => "nginx_access"
+    } 
+}
+output {
+stdout {codec => rubydebug }
+if [type] == "nginx_access"{
+   redis {
+    host => ["192.168.201.135:6379"]
+    data_type=> "list"
+    key => "nginx"
+    }
+  }
+}
+
+#测试ngnix
+[root@localhost conf]# curl localhost
+hello ansible install nginx
+#配置nginx日志格式
+#编辑vi nginx.conf
+20 log_format backend  '$remote_addr - $remote_user[$time_local] "$request" '
+ 21                       '$status $body_bytes_sent "$http_referer" '
+ 22                       '"$http_user_agent" "$http_x_forwarded_for" $request_time ';
+#查看访问日志
+[root@localhost conf]# cat /var/log/nginx/hxopensource-access.log
+192.168.201.1 - -[24/Mar/2017:04:24:18 +0800] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36" "-" 0.000
+至此agent端配置完成
+#Logstash-server端配置
+#方便管理文件，把采集数据的文件统一放到一个目录中管理
+#在server端执行
+[root@elk logstash-5.2.0]# mkdir server_conf
+#cd to server_conf
+[root@localhost logstash-5.2.0]# cd server_conf/
+#创建接受文件
+[root@elk server_conf]#cat logstash-server-nginx.conf
+input {
+  redis {
+    host => "192.168.201.135"
+    port => 6379
+    data_type => "list"
+    key => "nginx"
+  }
+}
+filter {
+	if[type] =~ "NginxAccess-" {
+		grok {
+            		patterns_dir => ["/data/application/logstash-5.2.0/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-4.0.2/patterns/"]
+            		match => {
+                		"message" => "%{NGINXACCESS}"
+            		}
+        	}
+    		date {
+        		match => ["timestamp" , "dd/MMM/YYYY:HH:mm:ss Z" ]
+    		}
+}
+}
+output {
+     elasticsearch {
+      action => "index"
+      hosts => "192.168.201.135:9200"
+      index => "nginx-%{+yyyy.MM.dd}"
+      }
+}

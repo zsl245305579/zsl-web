@@ -1,0 +1,42 @@
+mysql -uroot -p123456 -e "show character set \G;"  查看所有的字符集
+
+查看常用的字符集：
+mysql -uroot -p123456 -e "show character set\G;" |egrep "gbk|utf8|latin1"|awk '{print $0}'
+
+16.1.5  查看MySQL当前的字符集设置情况
+mysql> show variables like 'character_set%';
+
+
+16.1.6  实战，迁移数据
+背景：公司业务数据book,由于之前建表没注意字符集的问题，导致之前写入的数据出现乱码。现在要将之前的数据和现在数据的字符集一致，这样才不出现乱码情况。
+将字符集为latin1已有记录的数据转成utf8，并且已经存在的记录不乱码
+步骤
+	1：建库及建表的语句导出，sed批量修改为UTF-8；
+	2：导出之前所有的数据；
+	3：修改MySQL服务端和客户端编码为UTF-8；
+	4：删除原有的库表及数据；
+	5：导入新的建库及建表语句；
+	6：导入之前的数据。
+1）：导出表结构
+	mysqldump –uroot   --default-character-set=latin1 -d book2> booktable.sql 
+2）:编辑booktable.sql 将latin1修改成utf8
+	vim booktable.sql 修改所有latin1为utf8
+3）:确保数据库不再更新，导出所有数据
+	mysqldump  -uroot –p123456 --quick --no-create-info --extended-insert --default-character-set=latin1 book2>bookdata.sql
+
+
+参数说明：
+--quick:用于转储大的表，强制mysqldump从服务器一次一行的检索数据而不是检索所有行，并输出当前cache到内存中
+--no-create-info:不要创建create table语句
+--extended-insert:使用包括几个values列表的多行insert语法，这样文件更小，IO也小，导入数据时会非常快
+--default-character-set=latin1:按照原有字符集导出数据，这样导出的文件中，所有中文都是可见的，不会保存成乱码
+4）：打开bookdata.sql 将SET NAME latin1 修改成SET NAME utf8
+	vim bookdata.sql 
+	/*!40101 SET NAMES utf8 */;
+5）:重新建库
+	mysql> create database book2 default charset utf8;
+6）：建立表，导入我们之前导出的表的数据库
+	mysql –uroot –p123456 book2 <booktable.sql
+7）:导入数据
+	mysql -uroot -p123456 book2 <bookdata.sql
+	注意：选择目标字符集时，要注意最好大于等于原字符集（字库更大），否则可能会丢失不被支持的数据。

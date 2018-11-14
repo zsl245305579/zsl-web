@@ -61,7 +61,7 @@ enabled=1
 三、测试ES
 1、配置和启动ES服务器进程
 # /sbin/chkconfig --add elasticsearch
-# systemctl start elasticsearch
+# systemctl restart elasticsearch
 2、运行测试
 # curl -X GET localhost:9200
 
@@ -73,13 +73,23 @@ network.host 0.0.0.0
 http.port: 9200
 
 
-http://45.115.243.24:9200/
+http://45.115.243.24:9200
 
 插件安装
 
 /usr/share/elasticsearch/bin/plugin install mobz/elasticsearch-head
+/usr/share/elasticsearch/bin/plugin install lukas-vlcek/bigdesk/2.5.0
+
+/usr/share/elasticsearch/bin/plugin install elasticsearch/marvel/latest
 
 http://45.115.243.24:9200/_plugin/head/
 
+http://45.115.243.24:9200/_plugin/marvel/
 
 https://www.cnblogs.com/miao-zp/p/6006595.html
+
+/index-demo/test
+{
+"user":"wangshibo",
+"mesg":"hello world"
+}
