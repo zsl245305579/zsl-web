@@ -65,6 +65,7 @@ logfile "/data/application/redis-3.0.5/log/redis.log" #log存放位置
 dir /data/application/redis-3.0.5
 
 egrep -v "^$|#" /data/application/redis-3.0.5/etc/redis.conf
+
 /data/application/redis-3.0.5/bin/redis-server /data/application/redis-3.0.5/etc/redis.conf
 
 yum install lsof
@@ -193,70 +194,73 @@ http://192.168.1.63:5601
 [root@localhost ~]# curl localhost
 hello ansible install nginx
 #查看下agent端采集的数据
-[root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf
+[root@localhost logstash-5.2.0]#/data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/bin/logstash-nginx.conf
 
 
 
 
 #安装Logstash
-这里安装logstash和在服务端安装logstash方式一样，区别在于配置文件有区别，这里是采集数据
-请参考服务端的安装方式
-#创建agent目录
-#方便管理文件，把采集数据的文件统一放到一个目录中管理
-[root@localhost logstash-5.2.0]# mkdir agent_conf
+mkdir -pv /data/application/
+tar zxvf logstash-5.2.0.tar.gz  -C /data/application/
+
+[root@localhost logstash-5.2.0]# mkdir /data/application/logstash-5.2.0/agent_conf
 #cd to agent_conf
 [root@localhost logstash-5.2.0]# cd agent_conf/
 
+vi /data/application/logstash-5.2.0/agent_conf/nginx-agent.conf
 
 #创建采集数据的文件
 [root@localhost agent_conf]# cat nginx-agent.conf 
 input {
     file {
-        path => ["/var/log/nginx/hxopensource-access.log"]
         type => "nginx_access"
+        path => ["/var/log/nginx/access.log"]
+	start_position => "beginning"
     } 
 }
 output {
 stdout {codec => rubydebug }
-if [type] == "nginx_access"{
    redis {
-    host => ["192.168.201.135:6379"]
-    data_type=> "list"
-    key => "nginx"
+	host => ["192.168.1.63:6379"]
+	data_type=> "list"
+	key => "nginx_access"
     }
-  }
 }
 
 #测试ngnix
+
+yum install nginx -y
+systemctl restart nginx
 [root@localhost conf]# curl localhost
 hello ansible install nginx
 #配置nginx日志格式
-#编辑vi nginx.conf
+#编辑vi /etc/nginx/nginx.conf
 20 log_format backend  '$remote_addr - $remote_user[$time_local] "$request" '
  21                       '$status $body_bytes_sent "$http_referer" '
  22                       '"$http_user_agent" "$http_x_forwarded_for" $request_time ';
 #查看访问日志
-[root@localhost conf]# cat /var/log/nginx/hxopensource-access.log
+[root@localhost conf]# cat /var/log/nginx/access.log
 192.168.201.1 - -[24/Mar/2017:04:24:18 +0800] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36" "-" 0.000
 至此agent端配置完成
 #Logstash-server端配置
 #方便管理文件，把采集数据的文件统一放到一个目录中管理
 #在server端执行
-[root@elk logstash-5.2.0]# mkdir server_conf
+[root@elk logstash-5.2.0]# mkdir /data/application/logstash-5.2.0/server_conf
 #cd to server_conf
-[root@localhost logstash-5.2.0]# cd server_conf/
+[root@localhost logstash-5.2.0]# vi /data/application/logstash-5.2.0/server_conf/logstash-server-nginx.conf
 #创建接受文件
 [root@elk server_conf]#cat logstash-server-nginx.conf
 input {
   redis {
-    host => "192.168.201.135"
-    port => 6379
-    data_type => "list"
-    key => "nginx"
+	host => "192.168.1.63"
+	port => "6379"
+	data_type => "list"
+	key => "nginx_access"
+	type => "redis-input"
   }
 }
 filter {
-	if[type] =~ "NginxAccess-" {
+	if[type] =~ "nginx_access" {
 		grok {
             		patterns_dir => ["/data/application/logstash-5.2.0/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-4.0.2/patterns/"]
             		match => {
@@ -266,12 +270,63 @@ filter {
     		date {
         		match => ["timestamp" , "dd/MMM/YYYY:HH:mm:ss Z" ]
     		}
-}
+	}
 }
 output {
      elasticsearch {
-      action => "index"
-      hosts => "192.168.201.135:9200"
-      index => "nginx-%{+yyyy.MM.dd}"
+      hosts => "192.168.1.63:9200"
+      index => "nginx-access-%{+yyyy.MM.dd}"
       }
 }
+
+#测试
+启动顺序由左到右Elasticsearch-Kibana--Logstash
+
+[elk@elk root]$ /data/application/elasticsearch-5.2.0/bin/elasticsearch
+/data/application/kibana-5.2.0-linux-x86_64/bin/kibana
+./bin/logstash -f logstash-nginx.conf  -t
+/data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/server_conf/logstash-server-nginx.conf -t
+/data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/server_conf/logstash-server-nginx.conf
+
+
+客户端启动
+
+/data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/agent_conf/nginx-agent.conf
+
+客户端也需要装java
+2.3.2 安装jdk
+#卸载系统自带jdk
+#查看系统自带jdk
+[root@elk elk_pack]#rpm -qa|grep java
+#卸载
+[root@elk elk_pack]#yum remove java-1.8.0-openjdk
+[root@elk elk_pack]#yum remove java-1.7.0-openjdk
+#解压
+[root@elk elk_pack]# tar zxvf jdk-8u91-linux-x64.tar.gz -C /data/application/
+[root@elk jdk1.8.0_91]# vi /etc/profile.d/java.sh 
+export JAVA_HOME=/data/application/jdk1.8.0_91/
+export PATH=$JAVA_HOME/bin:$PATH
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+[root@elk jdk1.8.0_91]#source /etc/profile.d/java.sh
+[root@elk jdk1.8.0_91]#java -version
+
+
+vi /data/application/logstash-5.2.0/vendor/bundle/jruby/1.9/gems/logstash-patterns-core-4.0.2/patterns/nginx
+
+NGINXACCESS %{IPORHOST:clientip} \[%{HTTPDATE:timestamp}\] "%{WORD:verb} %{URIPATHPARAM:request} HTTP/%{NUMBER:httpversion}" (?:%{QS:content_type}|-) (?:%{QS:request_body}|-) (?:"(?:%{URI:referrer}|-)"|%{QS:referrer}) %{NUMBER:response} %{BASE16FLOAT:request_time} (?:%{NUMBER:bytes}|-)
+NGINXERROR_DATESTAMP %{YEAR}/%{MONTHNUM}/%{MONTHDAY} %{TIME}
+NGINXERROR_PID (?:[0-9]+#[0-9]+\:)
+NGINXERROR_TID (?:\*[0-9]+)
+NGINXERROR %{NGINXERROR_DATESTAMP:timestamp} \[%{LOGLEVEL:loglevel}\] %{NGINXERROR_PID:pid} %{NGINXERROR_TID:tid} %{GREEDYDATA:errormsg}, client: %{IPORHOST:clientip}, server: %{HOSTNAME:server}, request: %{QS:request}(?:, upstream: %{QS:upstream})?, host: \"%{HOSTNAME:hostname}\"(?:, referrer: (?:"(?:%{URI:referrer}|-)"|%{QS:referrer}))?
+
+
+logstash-nginx_server nginx_agent nginx_patterns_server
+
+vi /etc/nginx/nginx.conf
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
