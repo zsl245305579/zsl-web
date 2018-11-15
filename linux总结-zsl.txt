@@ -1,0 +1,29 @@
+
+extundelete
+
+[root@xuegod63 ~]# lsof -p  43641  #一般用于查看木马进程，在读哪些文件
+
+[root@xuegod63 ~]# lsof -i :22    #用于查看端口，或查看黑客开启的后门端口是哪个进程在使用
+
+原理汇总
+电源-bios引导（硬件初始化）-MBR引导（读取分区信息）-grub2引导（加载内核）-内核（内核初始化）-systemd初始（守护进程选择启动级别）
+
+默认启动级别
+systemctl set-default name.target 3
+systemctl set-default graphical.target 5
+
+vim /etc/default/grub 修改内核启动顺序
+
+ip 4层协议
+网络接口（arp协议）-网络ip层（ICMP）-传输层（tcp udp）-应用层
+
+netstat -anutp
+-a, --all  显示本机所有连接和监听的端口
+-n, --numeric    don't resolve names  以数字形式显示当前建立的有效连接和端口
+-u  显示udp协议连接
+-t  显示tcp协议连接
+-p, --programs   显示连接对应的PID与程序名
+
+echo 30 > /proc/sys/net/ipv4/tcp_fin_timeout  #通过缩短时间time_wait时间来快速释放链接默认60秒
+
+http://ssa.yundun.com/cc
