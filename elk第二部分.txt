@@ -176,6 +176,9 @@ kibana.index: ".kibana"		#创建索引
 http://192.168.1.63:5601
 
 
+
+
+
 #测试语法是否有问题
 [root@localhost logstash-5.2.0]# ./bin/logstash -f logstash-nginx.conf  -t
 
@@ -284,7 +287,6 @@ output {
 
 [elk@elk root]$ /data/application/elasticsearch-5.2.0/bin/elasticsearch
 /data/application/kibana-5.2.0-linux-x86_64/bin/kibana
-./bin/logstash -f logstash-nginx.conf  -t
 /data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/server_conf/logstash-server-nginx.conf -t
 /data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/server_conf/logstash-server-nginx.conf
 
@@ -294,9 +296,7 @@ output {
 /data/application/logstash-5.2.0/bin/logstash -f /data/application/logstash-5.2.0/agent_conf/nginx-agent.conf
 
 客户端也需要装java
-2.3.2 安装jdk
-#卸载系统自带jdk
-#查看系统自带jdk
+
 [root@elk elk_pack]#rpm -qa|grep java
 #卸载
 [root@elk elk_pack]#yum remove java-1.8.0-openjdk
