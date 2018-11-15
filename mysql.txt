@@ -1,29 +1,34 @@
-mysql -uroot -p123456 -e "show character set \G;"  查看所有的字符集
+mysql -uroot -p123456 -e "show character set \G;" 查看所有的字符集
 
 查看常用的字符集：
 mysql -uroot -p123456 -e "show character set\G;" |egrep "gbk|utf8|latin1"|awk '{print $0}'
-
-16.1.5  查看MySQL当前的字符集设置情况
+查看MySQL当前的字符集
 mysql> show variables like 'character_set%';
+ 
 
 
-16.1.6  实战，迁移数据
-背景：公司业务数据book,由于之前建表没注意字符集的问题，导致之前写入的数据出现乱码。现在要将之前的数据和现在数据的字符集一致，这样才不出现乱码情况。
-将字符集为latin1已有记录的数据转成utf8，并且已经存在的记录不乱码
+1. 实战，迁移数据
+背景：
+数据库字符集转换 latin1转成utf8 并且已经存在的记录不乱码
 步骤
-	1：建库及建表的语句导出，sed批量修改为UTF-8；
-	2：导出之前所有的数据；
-	3：修改MySQL服务端和客户端编码为UTF-8；
-	4：删除原有的库表及数据；
-	5：导入新的建库及建表语句；
-	6：导入之前的数据。
+1：建库及建表的语句导出，sed批量修改为UTF-8；
+2：导出之前所有的数据；
+3：修改MySQL服务端和客户端编码为UTF-8；
+4：删除原有的库表及数据；
+5：导入新的建库及建表语句；
+6：导入之前的数据。
 1）：导出表结构
-	mysqldump –uroot   --default-character-set=latin1 -d book2> booktable.sql 
-2）:编辑booktable.sql 将latin1修改成utf8
-	vim booktable.sql 修改所有latin1为utf8
-3）:确保数据库不再更新，导出所有数据
-	mysqldump  -uroot –p123456 --quick --no-create-info --extended-insert --default-character-set=latin1 book2>bookdata.sql
 
+mysqldump –uroot --default-character-set=latin1 -d book2> booktable.sql 
+
+2）:编辑booktable.sql 将latin1修改成utf8
+vim booktable.sql 修改所有latin1为utf8
+
+
+3）:确保数据库不再更新，导出所有数据
+
+mysqldump -uroot –p123456 --quick --no-create-info --extended-insert --default-character-set=latin1 book2>bookdata.sql
+ 
 
 参数说明：
 --quick:用于转储大的表，强制mysqldump从服务器一次一行的检索数据而不是检索所有行，并输出当前cache到内存中
@@ -31,12 +36,296 @@ mysql> show variables like 'character_set%';
 --extended-insert:使用包括几个values列表的多行insert语法，这样文件更小，IO也小，导入数据时会非常快
 --default-character-set=latin1:按照原有字符集导出数据，这样导出的文件中，所有中文都是可见的，不会保存成乱码
 4）：打开bookdata.sql 将SET NAME latin1 修改成SET NAME utf8
-	vim bookdata.sql 
-	/*!40101 SET NAMES utf8 */;
+
+vim bookdata.sql 
+/*!40101 SET NAMES utf8 */;
+
 5）:重新建库
-	mysql> create database book2 default charset utf8;
+
+mysql> create database book2 default charset utf8;
+
 6）：建立表，导入我们之前导出的表的数据库
-	mysql –uroot –p123456 book2 <booktable.sql
+
+mysql –uroot –p123456 book2 <booktable.sql
+
 7）:导入数据
-	mysql -uroot -p123456 book2 <bookdata.sql
-	注意：选择目标字符集时，要注意最好大于等于原字符集（字库更大），否则可能会丢失不被支持的数据。
+
+mysql -uroot -p123456 book2 <bookdata.sql #注意：选择目标字符集时，要注意最好大于等于原字符集（字库更大），否则可能会丢失不被支持的数据。
+ 
+
+ 
+
+2.日常维护
+
+/usr/local/mysql/bin/mysqlcheck #源码编译安装位置
+rpm -qf `which mysqlcheck` yum安装查看
+
+参数选项：
+mysqlcheck –-help 查看帮助
+-c, --check (检查表)；
+-r, --repair（修复表)；
+-a, --analyze (分析表)；
+-o, --tmpimize(优化表)； //其中，默认选项是-c(检查表)
+-u， 使用mysql中哪个用户进行操作
+Mysqlcheck使用语法：
+使用以下3种方式来调用mysqlcheck：
+mysqlcheck[tmpions] db_name [tables]
+mysqlcheck[tmpions] ---database DB1 [DB2 DB3...]
+mysqlcheck[tmpions] --all--database
+如果没有指定任何表或使用---database或--all--database选项，则检查整个数据库
+
+ 
+
+复制代码
+1：检查表(check)
+mysqlcheck -uroot -p123456 -c book books
+
+2:修复表（repair）
+mysqlcheck -uroot -p123456 -r book books
+3:修复指定的数据库
+mysqlcheck -uroot -p -r --databases book
+
+扩展： 修复文件系统。 容易掉失数据
+fsck -y -f /dev/sdaX
+4:检查修复所有数据库
+mysqlcheck -uroot -p -A –r
+
+5：每天定时对MySQL数据库进行优化
+使用计划任务
+crontab –e
+#0 1 * * * mysqlcheck -A -o -r -u你的用户名 -p你的密码 > /dev/null 2>&1
+0 3 * * * mysqlcheck -uroot -p123456 -r -o -A > /dev/null 2>&1 每天3点优化
+复制代码
+ 
+
+
+3.数据备份
+1)MySQL备份的类型
+按照备份时对数据库的影响范围分为：
+Hot backup(热备) Cold Backup（冷备）Warm Backup（温备）
+Hot backup：运行数据备份
+Cold Backup：停止数据库备份
+Warm Backup：锁定库后备份
+按照备份后的文件内容：
+逻辑备份 -->
+指备份后的文件内容是可读的，通常为文本文件如mysqldump和SELECT * INTO OUTFILE的方法，一般适用于数据库的升级和迁移，恢复时间较长
+裸文件备份-->
+拷贝数据库的物理文件（mysqlhotcopy 、ibbackup、xtrabackup这类工具）恢复时间较短。
+按照备份数据库的内容来分，又可以分为：
+完全备份：对数据库完整的备份；
+增量备份：在上一次完全备份基础上，对更新的数据进行备份（xtrabackup）；
+日志备份：二进制日志备份，主从复制。
+
+2)逻辑备份工具mysqldump
+A:导出所有数据库
+
+mysqldump -uroot -p123456 -A >all.sql
+mysqldump -uroot -p123456 --all-databases >all2.sql
+ 
+
+
+B:导出某个数据库
+
+mysqldump -u 用户名 -p 数据库名 > 导出的文件名.sql # 注意是-p空格后是数据库名，不是密码。
+mysqldump -uroot -p123456 book >book.sql
+ 
+
+
+C:导出单张表
+
+mysqldump -uroot -p123456 book books >books.sql #导出book库books表
+ 
+
+
+D:导出库的表结构
+mysqldump -uroot -p123456 -d book>booktable.sql #只导出book库的表结构
+E：只导出数据
+mysqldump -uroot -p123456 -t book>bookdata.sql #只导出book库中的数据
+
+F:导出数据库，并自动生成库的创建语句
+
+mysqldump -uroot -p123456 -B book2 >book2.sql
+mysql -uroot -p123456 < book2.sql 导入不用指定数据名
+导入数据：
+A：导入所有数据库
+mysql -uroot -p123456 <all.sql
+B：导入数据库
+Mysql -uroot -p123456 book <book.sql #如果导入时，没有对应的数据库，需要你手动创建一下：mysql> create database book;
+使用source导入
+mysql> create database book;
+mysql> use book;
+mysql> source /root/book.sql
+
+c:导入表
+mysql> drop table books;
+mysql> source /root/books.sql; ##导入表时，不需要重新，创建表。要先进到相应的数据库中
+mysql> select * from books;
+D：导入表结构和数据
+mysql> create database book;
+mysql -uroot -p123456 book<booktable.sql
+mysql -uroot -p123456 book<bookdata.sql
+
+mysqlhotcopy --5.7版本已经去掉此命令，请在5.5以下测试这里不再测试
+总结：
+mysqldump和mysqlhotcopy的比较：
+1、mysqldump 是采用SQL级别的备份机制，它将数据表导成 SQL 脚本文件，数据库大时，占用系统资源较多，支持常用的MyISAM，innodb
+2、mysqlhotcopy只是简单的缓存写入和文件复制的过程，占用资源和备份速度比mysqldump快很多很多。特别适合大的数据库，但需要注意的是：mysqlhotcopy只支持MyISAM 引擎
+3、mysqlhotcopy只能运行在数据库目录所在的机器上，mysqldump可以用在远程客户端。
+4、相同的地方都是在线执行LOCK TABLES 以及 UNLOCK TABLES
+5、mysqlhotcopy恢复只需要COPY备份文件到源目录覆盖即可，mysqldump需要导入SQL文件到原来库中。
+
+ 
+
+ 
+
+热备xtrbackup 安装 （mysql5.7.20需安装最新版XtraBackup2.4.9）
+
+下载安装包
+
+复制代码
+wget https://www.percona.com/downloads/XtraBackup/Percona-XtraBackup-2.4.9/binary/redhat/7/x86_64/Percona-XtraBackup-2.4.9-ra467167cdd4-el7-x86_64-bundle.tar
+[root@xuegod70 ~]# tar -xvf Percona-XtraBackup-2.4.9-ra467167cdd4-el7-x86_64-bundle.tar 
+Yum安装并解决依赖：
+yum -y install percona-xtrabackup-24-2.4.9-1.el7.x86_64.rpm
+
+在mysqld的范围添加
+[mysqld]
+datadir=/var/lib/mysql 
+[root@xuegod70 ~]# systemctl restart mysqld
+
+innobackupex --user=root --password=123456 /tmp/db_backup/
+innobackupex --user=root --password=123456 /tmp/db_backup/ 2>>/tmp/db_backup/db_backup.log
+
+ 
+复制代码
+2>>/tmp/db_backup/db_backup.log #不显示输出信息，输出信息重定向到db_backup.log
+
+其他选项:
+--no-timestamp，指定了这个选项备份会直接备份在BACKUP-DIR，不再创建时间戳文件夹。
+--default-file，指定配置文件，用来配置innobackupex的选线
+
+innobackupex --user=root --password=123456 --no-timestamp /tmp/db_backup/full
+ 
+
+
+innobackupex --user=root --password=123456 --no-timestamp /tmp/db_backup/full (使用--no-timestamp时，后面的这个full目录必须跟上且不能提前自己建立，它由innobackupex自动建立，否则会报错innobackupex: Error: Failed to create backup directory)
+
+ 
+
+复制代码
+systemctl stop mysqld
+删除数据：（危险动作）：
+rm -rf /var/lib/mysql/*
+[root@xuegod70 ~]# innobackupex --copy-back /tmp/db_backup/2017-12-11_23-20-17/
+ll /var/lib/mysql 查看权限
+重新授权
+chown -R mysql:mysql /var/lib/mysql/ 要不然MySQL启动不起来
+systemctl restart mysqld
+复制代码
+ 
+
+
+注： innobackupex –copy-back不会覆盖已存在的文件，还要注意，还原时需要先关闭服务，如果服务是启动的，那么就不能还原到datadir。
+
+ 
+
+ 
+
+创建增量备份
+
+1：首先创建全备
+在创建增量备份之前需要一个全备，不然增量备份是没有意义的。
+
+innobackupex --user=root --password=123456 /tmp/db_backup/
+ 
+
+这样就会在/tmp/db_backup下创建一个时间戳文件夹 2017-12-11_23-20-17，文件夹下就是备份文件
+检查备份文件夹下的xtrabackup-checkpoints，查看信息
+cat /tmp/db_backup/2017-12-11_23-20-17/xtrabackup_checkpoints
+backup_type = full-backuped #全备的意思
+from_lsn = 0
+to_lsn = 1600459
+last_lsn = 16004592：创建第一个增量备份
+首先我插入一些数据到表里面
+
+mysql> use book;
+mysql> insert into test2 (name) values('HA');
+ 
+
+使用—incremental创建增量备份
+
+innobackupex --user=root --password=123456 --incremental /tmp/db_backup/ --incremental-basedir=/tmp/db_backup/2017-12-11_23-20-17/  #后面指定这哪个全备上进行增量备份
+ 
+
+3：然后再创建一个增量备份
+在上一个的增量备份基础上创建
+
+innobackupex --user=root --password=123456 --incremental /tmp/db_backup/ --incremental-basedir=/tmp/db_backup/2017-12-11_23-20-17/
+ 
+
+再查看LSN<日志序列号>
+[root@xuegod70 mysql]# cat /tmp/2017-12-11_23-58-17/xtrabackup_checkpoints 
+backup_type = incremental
+from_lsn = 1600459
+to_lsn = 1601301
+last_lsn = 1601301
+
+
+4：增量备份创建的替代方法
+可以使用指定—incremental-lsn来代替—incremental-basedir的方法创建增量备份。
+
+nnobackupex --user=root --password=123456 --incremental /tmp/db_backup/ --incremental-lsn=1600012 #从这个编号点开始备份
+ 
+
+
+注意：xtrabackup只会影响xtradb或者innodb的表，其他引擎的表在增量备份的时候只会复制整个文件，不会差异。
+
+还原增量备份
+增量备份的恢复比全备要复杂一点，第一步是在所有备份目录下重做已提交的日志，如：
+
+innobackupex --apply-log --redo-only BASE-DIR 
+innobackupex --apply-log --redo-only BASE-DIR --incremental-dir=INCREMENTAL-DIR-1 
+innobackupex --apply-log BASE-DIR --incremental-dir=INCREMENTAL-DIR-2 
+ 
+
+注意：如果仅有一份增量备份，第2条语句忽然
+其中BASE-DIR是指全备目录，INCREMENTAL-DIR-1是指第一次的增量备份，INCREMENTAL-DIR-2是指第二次的增量备份，以此类推。
+这里要注意的是：最后一步的增量备份并没有--redo-only选项！
+以上语句执行成功之后，最终数据在BASE-DIR（即全备目录）下。
+第一步完成之后，我们开始第二步------回滚未完成的日志：
+
+innobackupex --apply-log BASE-DIR
+
+上面执行完之后，BASE-DIR里的备份文件已完全准备就绪，最后一步是拷贝：
+
+innobackupex --copy-back BASE-DIR
+恢复mysql权限 chown –R mysql.mysql /var/lib/mysql/
+最后启动systemctl start mysqld 
+ 
+
+检验数据是否恢复正常
+
+
+4常维护操作
+
+复制代码
+创建用户,
+mysql>CREATE USER 'test'@'localhost' IDENTIFIED BY '123456';
+mysql>CREATE USER 'test'@'%' IDENTIFIED BY '123456'; #远程登录，不包括localhost
+mysql>flush privileges; #刷新系统权限表
+用户授权
+授权格式：grant 权限 on 数据库.* to 用户名@登录主机 identified by '密码';
+mysql>create database db; 
+mysql> grant all privileges on db.* to “test”@”localhost” identified by “123456”; #所有权限
+mysql> grant select,update on db.* to “test”@”localhost” identified by “1234”; #部分权限
+
+mysql> flush privileges; #刷新系统权限
+删除用户
+mysql>Delete FROM mysql.user Where User=”test” and Host=”localhost”; 
+mysql>flush privileges;
+忘记密码修改方法
+在/etc/my.cnf的[mysqld] 中加上一行跳过权限限制
+skip-grant-tables
+保存退出 重启mysql服务
+mysql> update user set authentication_string=password('654321') where user='root';
+mysql> flush privileges;
