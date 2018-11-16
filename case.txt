@@ -1,0 +1,183 @@
+1.case
+# vim  case-2.sh
+#!/bin/bash
+case $1 in
+	start)
+		systemctl $1 httpd
+		ps aux|grep httpd
+		echo "httpd start"
+		;;
+	stop)
+		systemctl $1 httpd
+		ps aux|grep httpd
+		echo "httpd stop"
+		;;
+	status)
+		systemctl $1 httpd
+		;;
+	restart)
+		systemctl $1 httpd
+		echo "httpd restart"
+		;;
+	*)
+		echo "USAGE: $0  start|stop|restart"
+esac
+
+
+cat case-1.sh 
+
+#!/bin/bash
+cat <<eof
+****************
+** 1. backup  **
+** 2. copy    **
+** 3. quit    **
+****************
+eof
+read -p "Input a choose: " OP
+case $OP in
+	1|backup)
+		echo "BACKUP......"
+		;;
+	2|copy)
+		echo "COPY....."
+		;;
+	3|quit)
+		exit
+		;;
+	*)
+		echo error
+esac
+
+2.for 循环
+
+for var in list 
+do
+  commands
+done
+
+1）
+#!/bin/bash
+for var in a1 b1 c1 d1
+do
+	echo the text is $var
+done
+2）
+cat for-4.sh 
+#!/bin/bash
+list="a1 b1 c1 d1"
+for i in $list
+do
+	echo is a $i
+done
+
+3）
+cat for-5.sh   #以空格做分隔符
+#!/bin/bash
+for i in `cat  /etc/hosts`
+do
+	echo "$i"
+done
+
+4）
+
+cat for-6.sh  #指定以\n回车做为 for语句的分隔符
+#!/bin/bash
+IFS=$'\n'
+for i in `cat /etc/hosts`
+do
+	echo "$i"
+done
+
+cat for-7.sh   #以：冒号做分隔符
+#!/bin/bash
+IFS=:
+list=`head -1 /etc/passwd`
+for i in $list
+do
+	echo $i
+done
+
+5）
+cat for-8.sh 
+#!/bin/bash
+for (( i=1 ; i<=10 ; i++ ))
+do
+	echo num is $i
+done
+
+6）
+# cat for-8.sh 
+#!/bin/bash
+for ((a=1,b=9 ; a<10 ; a++,b--))
+do
+	echo num is $a - $b 
+done
+
+
+7）
+
+cat for-adduser.sh 
+#!/bin/bash
+for name in `cat /root/a.txt`
+#for name in $(cat /root/a.txt)
+do
+        id $name &> /dev/null
+        if [ $? -ne 0 ];then
+                useradd $name
+                echo "123456" |passwd --stdin $name &> /dev/null
+                echo "user $name created"
+
+        else
+                echo "user $name is exist"
+        fi
+done
+
+8）
+# cat for-for.sh
+for i in  `seq 9`
+do
+         for j in `seq $i`
+         do
+              echo  -n  "$i*$j= `echo $(($i*$j))` "
+         done
+        echo "  "
+done
+
+
+
+21.4.3  批量创建帐号并生成随机密码
+[root@xuegod63 ~]# vim adduser.sh
+#!/bin/bash
+for i in xuegoda{1..10}
+do
+      useradd $i
+      pass=`date +%s|md5sum|cut -c 1-8`
+      sleep 1
+      echo "$i:$pass" >> /tmp/passwd.log
+      echo $pass |passwd --stdin $i > /dev/null 2>&1
+      if [ $? -eq 0 ];then
+        echo "create user is successfully!"
+      else
+        echo "create user is failed!"
+      fi
+done
+
+
+日志
+
+vim log-back.sh
+#!/bin/sh
+SRC_DIR=/var/log/
+DES_DIR=/opt/backup/`date +%Y%m%d`
+if
+[ ! -d  $DES_DIR ] ; then
+        mkdir -p $DES_DIR
+fi
+for i in  `find  $SRC_DIR  -name "*.log"`
+do
+        tar  czf  $i.tgz  $i
+done
+mv /var/log/*.tgz $DES_DIR
+ls -lh $DES_DIR
+echo "The scripts exec end, Files tar successfully !"
