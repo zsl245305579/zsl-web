@@ -1,0 +1,315 @@
+echo 'echo  /etc/profile ' >> /etc/profile
+echo 'echo  /etc/bashrc' >> /etc/bashrc
+echo 'echo  /root/.bashrc ' >> /root/.bashrc
+echo 'echo  /root/.bash_profile ' >> /root/.bash_profile
+
+ vi /etc/profile   #在文件的最后插入
+export VAR9=xuegod     #=等号两边不能有空格
+source  /etc/profile   #重新加载profile文件
+
+$#	传递到脚本的参数个数
+$?	显示最后命令的退出状态；0表示没有错误，其他任何值表明有错误
+$!	后台运行的最后一个进程的进程号pid
+
+
+
+java环境安装
+
+rpm -ivh jdk-8u161-linux-x64.rpm
+rpm -pql /root/jdk-8u161-linux-x64.rpm
+
+vim /etc/profile
+export JAVA_HOME=/usr/java/jdk1.8.0_161
+export JAVA_BIN=/usr/java/jdk1.8.0_161/bin
+export PATH=${JAVA_HOME}/bin:$PATH
+export CLASSPATH=.:${JAVA_HOME}/lib/dt.jar:${JAVA_HOME}/lib/tools.jar
+
+source /etc/profile
+java -version
+
+
+
+read a b
+hello word
+
+
+vim  if-1.sh 
+#!/bin/bash
+if ls /mnt
+then
+	echo "it's ok"
+fi
+
+
+
+20.2.2  双分支if语句
+语法格式：
+if command  ; 
+then
+		commands
+else
+		commands
+fi
+
+多分支
+if条件测试操作1 ; then
+		commands
+elif  条件测试操作2  ; then
+		commands
+elif 条件测试操作3 ; then
+		commands
+.......
+else
+		commands
+fi
+
+
+
+例4：判断用户在系统中是否存在，是否有家目录
+[root@xuegod63 ~]# cat if-4.sh
+#!/bin/bash
+read -p "input a user:" tu
+if grep $tu /etc/passwd ; then
+        echo "the user $tu exists on this system"
+elif ls -d /home/$tu  ;  then
+        echo "the user $tu not exists on this system"
+        echo "$tu has a home directory"
+else
+        echo "the user $tu not exists on this system"
+        echo "$tu not has a direcotry"
+fi
+
+test测试命令
+
+整数比较
+
+-eq  等
+-ne 不等
+-gt 大于
+-ge 大于等于
+-lt 小于
+-le 小于等于
+
+cat test2.sh 
+#!/bin/bash
+read -p "input var1 var2:" var1 var2
+if [ $var1 -gt $var2  ] ;  then
+        echo "$var1 > $var2"
+elif [ $var1 -lt $var2 ] ; then
+        echo "$var1 < $var2"
+else
+        echo "$var1 = $var2"
+fi
+注意：在做数值比较时，只能用整数
+
+字符串比较
+
+== 等于
+!= 不等于
+-z 长度为零
+-n 长度不为空
+str1 > str2 大于
+str1 < str2 小于
+
+根据用户名判断是否是超级管理员
+[root@xuegod63 ~]# vi test3.sh
+#!/bin/bash
+read -p  "input your name: " name
+if [ $name == "root" ] ; then
+        echo "you are super administrator"
+else
+        echo  "You are a general user"
+fi
+
+
+例2：在做字符串大小比较的时候，注意字符串的顺序
+?大于号和小于号必须转义，要不然SHELL会把它当成重定向符号
+?大于和小于它们的顺序和sort排序是不一样的
+?在test比较测试中，它使用的是ASCII顺序，大写字母是小于小写字母的；sort刚好相反
+
+[root@xuegod63 ~]# cat test4.sh 
+#!/bin/bash
+var1=test
+var2=Test
+if [  $var1 \>  $var2  ] ; then
+        echo "$var1 > $var2"
+else
+        echo "$var1 < $var2"
+fi 
+[root@xuegod63 ~]# bash test4.sh 
+test > Test
+
+
+-e 文件或目录存在
+-r 文件可读
+-w 文件可写
+-x 文件可执行
+-s 有字符在
+-d 目录存在
+-f 普通文件存在
+-c 是字符型文件存在
+-b 块文件存在
+file1 -nt fle2 是否比后面新
+file1 -ot file2 是否比后面旧
+
+
+vim  test5.sh 
+#!/bin/bash
+if [ -e /etc/passwd ] ; then
+        echo ok
+else
+        echo err
+fi 
+[root@xuegod63 ~]# bash test5.sh 
+ok
+
+test -e /etc/passwd && echo ok || echo err
+
+
+
+例：清空日志目录
+[root@xuegod63 ~]# cat clear-log.sh 
+#!/bin/bash
+# clear /var/log/messages
+
+#确定当前是root用户
+if [ $USER != "root" ];then
+	echo "你必须使用root用户才能执行脚本"
+	exit 10    #直接退出，并返回10
+fi
+
+#判断文件是否存在
+if [ ! -f /var/log/messages ];then
+	echo "文件不存在"
+	exit 12
+fi
+
+#保留最近100行的日志内容
+tail -100 /var/log/messages > /var/log/mesg.tmp
+
+#日志清理
+>/var/log/messages
+#cat /dev/null > /var/log/messages
+
+mv /var/log/mesg.tmp /var/log/messages
+echo "Logs clean up"
+
+
+
+
+if [ 条件判断一 ] && (||) [ 条件判断二 ]; then    
+   命令一
+elif [ 条件判断三 ] && (||) [ 条件判断四 ]; then
+    命令二	
+else
+?  ?执行其它
+fi
+
+
+vim  umask.sh 
+if [ $UID -gt 199 ] && [ "`/usr/bin/id -gn`" = "`/usr/bin/id -un`" ]; then
+    echo "umask 002"
+else
+    echo "i am root :umask 022"
+fi
+[root@xuegod63 ~]# bash umask.sh 
+i am root :umask 022
+
+
+
+
+例2：[[ 。。。 ]]和[ 。。。]的区别
+[[… ]] 运算符是[… ]运算符的扩充；[[… ]]能够支持 *，< 、>等符号且不需要转义符
+
+
+[root@xuegod63 ~]# if [ $USER == r* ] ; then echo "hello,$USER" ; else echo $USER not ; fi 
+root not
+#对比时r* ，就表示两个字符串 r*
+
+也可以这样写：
+[root@xuegod63 ~]# if [[ $USER == [a-z]oot ]] ; then echo "hello,$USER" ; else echo $USER not ;
+fi
+
+
+[[ 。。。 ]]和[ 。。。]的区别汇总：
+1、所有的字符与逻辑运算符直接用“空格”分开，不能连到一起。
+2、在[… ]表达式中，常见的> 、<需要加转义符\，大小比较
+3、进行逻辑运算符&& 、||比较时；如果用的[ ]符号，则用在外面，如[… ] && [… ] || [ …]如果在[…]里面进行逻辑与或的比较，则用-a、-o进行表示，如[ x = y –a x < z –o x > m ]
+4、[[… ]] 运算符只是[… ]运算符的扩充；能够支持< 、>符号运算不需要转义符；它还是以字符串比较大小。里面支持逻辑运算符 || 、 && ， 不再使用-a 、-o
+5、[[…]] 用 && 而不是 -a 表示逻辑“与”；用 || 而不是 -o表示逻辑“或”
+6、[[… ]]可以进行算术扩展，而[ ... ]不可以
+7、[[...]]能用正则，而[...]不行
+8、双括号((  ))用于数学表达式
+9、双方括号号[[  ]]用于高级字符串处理，比如“模糊匹配”
+
+
+
+20.5.1  实战1：编写脚本检查服务器运行状态
+[root@xuegod63 ~]# vim status.sh
+#!/bin/bash
+if [ $# -ge 1 ] ; then
+        systemctl status $1 > /dev/null
+   if [ $? -eq 0 ] ; then
+        echo "$1 服务正在运行"
+   else
+        systemctl start $1
+   fi
+else
+          echo "执行脚本的格式"
+          echo "sh $0 服务名"
+fi
+
+
+
+实战2:根据学生的成绩判断
+[root@xuegod63 ~]# vim  check_cj.sh  
+#!/bin/bash
+read  -p   "请输入你的成绩  "   cj
+if   [ $cj   -ge  0  ]    &&  [  $cj  -le  59  ]  ;then
+     echo   "补考"
+elif  [  $cj  -ge  60 ]    &&  [  $cj  -le  70   ]   ;then
+    echo  "良好"
+elif     [ $cj -ge 71 ]     &&  [ $cj   -le  85 ]   ;then
+   echo  "好"
+elif [ $cj  -ge 86 ]     &&  [   $cj  -le  100 ]   ;then
+    echo  "优秀" 
+else
+   echo "成绩的有效范围是0-100之间"
+fi
+
+
+
+
+20.5.3  实战3：每周一晚上3:00 ，备份数据库服务器上webdb库的所有数据到系统的/mysqlbak目录里，使用系统日期做备份文件名。
+[root@xuegod63 ~]# vim   mysqlbak.sh
+#!/bin/bash
+baknamefile=`date +%Y-%m-%d`
+bakdir=/mysqlbak
+user=root
+password=123
+dbname=webdb
+[  -e  $bakdir   ]   ||    mkdir    $bakdir
+mysqldump   -u$user   -p$password  --flush-logs  $dbname   >    $bakdir/${baknamefile}-webdb.sql
+
+因为mysql咱们还没有学，这里以/etc目录来做实验：
+[root@xuegod63 ~]# vim etcbak.sh
+#!/bin/bash
+baknamefile=`date +%Y-%m-%d`
+bakdir=/etcbak
+srcdir=/etc
+[  -e  $bakdir   ]   ||    mkdir    $bakdir
+tar zcvf ${bakdir}/${baknamefile}-etc.tar.gz /etc/
+echo "========================"
+ls -lh ${bakdir}/${baknamefile}-etc.tar.gz
+echo "back etc is ok!"
+
+[root@xuegod63 ~]# chmod +x  etcbak.sh
+
+[root@xuegod63 ~]# crontab  -e
+0 3 * * *  /root/etcbak.sh  2>&1 > /dev/null
+
+
+
+
+
+
