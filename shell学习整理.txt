@@ -3,6 +3,17 @@ echo 'echo  /etc/bashrc' >> /etc/bashrc
 echo 'echo  /root/.bashrc ' >> /root/.bashrc
 echo 'echo  /root/.bash_profile ' >> /root/.bash_profile
 
+
+*	匹配 0 或多个字符	a*b? a与b之间可以有任意长度的任意字符
+?	匹配任意一个字符	a?b? a与b之间必须也只能有一个字符
+[list]?	a[xyz]b 如axb, ayb, azb。
+[!list]?	a[!0-9]b?不能是阿拉伯数字, 如axb, aab, a-b。
+[c1-c2]	匹配 c1-c2 中的任意单一字符 如：[0-9] [a-z]	a[0-9]b? 0与9之间必须也只能有一个字符 如a0b, a1b... a9b。
+{string1,string2,...}	匹配 sring1 或 string2 (或更多)其一字符串	a{abc,xyz,123}b??? a与b之间只能是abc或xyz或123这三个字符串之一。
+
+
+
+
  vi /etc/profile   #在文件的最后插入
 export VAR9=xuegod     #=等号两边不能有空格
 source  /etc/profile   #重新加载profile文件
