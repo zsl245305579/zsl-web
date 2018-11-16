@@ -27,3 +27,22 @@ netstat -anutp
 echo 30 > /proc/sys/net/ipv4/tcp_fin_timeout  #通过缩短时间time_wait时间来快速释放链接默认60秒
 
 http://ssa.yundun.com/cc
+
+
+编辑配置文件  vim /etc/rsyslog.conf
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+authpriv.*                                              /var/log/secure
+mail.*                                                  -/var/log/maillog
+cron.*                                                  /var/log/cron
+*.emerg                                                 :omusrmsg:*
+uucp,news.crit                                          /var/log/spooler
+local7.*                                                /var/log/boot.log
+
+debug	信息对开发人员调试应用程序有用，在操作过程中无用
+info	正常的操作信息，可以收集报告，测量吞吐量等
+
+
+. info   大于等于info级别的信息全部记录到某个文件
+.=级别   仅记录等于某个级别的日志例:.=info  只记录info级别的日志  
+.! 级别  除了某个级别意外,记录所有的级别信息例.!err  除了err外记录所有
+.none  指的是排除某个类别  例： mail.none  所有mail类别的日志都不记录
