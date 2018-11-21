@@ -1,0 +1,269 @@
+ansiblle具有如下特点：
+1、部署简单，只需在主控端部署Ansible环境，被控端无需做任何操作；
+2、默认使用SSH协议对设备进行管理；
+3、主从集中化管理；
+4、配置简单、功能强大、扩展性强；
+5、支持API及自定义模块，可通过Python轻松扩展；
+6、通过Playbooks来定制强大的配置、状态管理
+7、对云计算平台、大数据都有很好的支持；
+
+
+
+29.1.2  Ansible工作机制
+Ansible在管理节点将Ansible模块通过?SSH?协议推送到被管理端执行，执行完之后自动删除，可以使用SVN等来管理自定义模块及编排。
+
+ansible 5个组成模块
+ansible 核心
+modules 核心模块和自定义模块
+plugins 模块补充插件
+playbooks 剧本 多任务配置文件
+
+inventory 定义ansible 管理主机的清单
+
+
+
+yum install epel-release -y
+
+yum install ansible -y
+
+ansible --version
+
+ansible-doc -l          #列出所有的模块列表 q退出
+ansible-doc -s 模块名    #查看指定模块的参数 
+例 ansible-doc -s service
+
+vim  /etc/ansible/hosts #定义主机清单
+[web-servers]                 #主机组名
+192.168.1.64  ansible_ssh_port=22  ansible_ssh_user=root  ansible_ssh_pass=123456
+
+ping测试
+ansible-doc -l | grep ping
+ansible-doc -s ping
+ansible -i /etc/ansible/hosts web-servers -m ping
+
+
+秘钥认证
+root@xuegod63?~]#ssh-keygen   #一路回车
+ssh-copy-id root@192.168.1.63 
+ssh-copy-id root@192.168.1.64
+ssh 192.168.1.64
+exit
+
+ping模块检查网络连通性
+command:作为ansible的默认模块，可以运行远程权限范围内的所有shell命令
+
+ansible -i /etc/ansible/hosts 'web-servers'  -m ping
+ansible 'web-servers'  -m ping  #不指定，默认使用/etc/ansible/hosts文件
+
+ansible -m command -a "uptime" 'web-servers'
+
+ansible -m command -a "uname -r" 'web-servers'
+
+ansible -m command -a "useradd mk123" 'web-servers'
+
+ansible -m command -a "grep mk123 /etc/passwd" 'web-servers'
+ansible -m command -a "df -Th" 'web-servers' > /tmp/command-output.txt
+
+
+ansible常见模块高级使用方法
+
+1.command模块为ansible默认模块，不指定-m参数时，使用的就是command模块缺点：不支持管道，没法批量执行命令；
+
+2.shell模块
+
+1）
+ansible -i /etc/ansible/hosts  web-servers -m shell -a "source  ~/.bash_profile && df -h | grep sda3"
+
+2）使用scripts模块可以在本地写一个脚本，在远程服务器上执行：注意执行权限
+vim  /etc/ansible/net.sh
+#!/bin/bash
+date
+hostname
+ansible -i /etc/ansible/hosts  web-servers -m script -a "/etc/ansible/net.sh"
+
+3.copy模块
+
+ansible -i /etc/ansible/hosts web-servers -m copy -a "src=/etc/hosts dest=/tmp/ owner=root group=root mode=0755"
+
+4.file模块设置文件属性
+
+ansible -i /etc/ansible/hosts web-servers -m file -a "path=/tmp/hosts mode=0777"
+
+5.stat模块获取远程文件信息
+
+ansible -i /etc/ansible/hosts web-servers -m stat -a "path=/tmp/hosts"
+
+6.get_url模块实现远程主机下载指定url到本地，支持sha256sum文件校验
+
+ ansible -i /etc/ansible/hosts web-servers -m get_url -a "url=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm  dest=/tmp/ mode=0440 force=yes"
+注：url=https://xxx  的等号=前后不能有空格
+扩展:查看force=yes的作用
+
+如果force=yes，当下载文件时，如果所下的内容和原目录下的文件内容不一样，则替换原文件，如果一样，就不下载了。
+如果为“否”，则仅在目标不存在时才下载文件。 一般来说，只有小型本地文件才应该为“是”。 在0.6之前，该模块表现为默认为“是”。
+
+7.yum模块linux平台软件包管理
+
+yum模块可以提供的status状态： latest ，present，installed  #这3个代表安装；removed, absent #后面2个是卸载
+
+ansible -i /etc/ansible/hosts web-servers -m yum -a "name=httpd  state=latest"
+
+8.cron模块远程主机crontab配置
+
+ansible -i /etc/ansible/hosts web-servers -m cron -a "name='list dir' minute='*/30' job='ls /tmp'"
+crontab  -l
+#Ansible: list dir
+*/30 * * * * ls /tmp
+9.service模块远程主机系统服务管理
+
+service模块常用参数：
+（1）、name参数：nginx，httpd。 
+（2）、state参数: tarted、stopped、restarted（重启）、reloaded。 
+enabled参数：yes 表示将对应服务设置为开机启动 no 表示不会开机启动。 注：想使用service模块启动服务，被启动的服务，必须可以使用service 命令启动或关闭
+
+ansible -i /etc/ansible/hosts web-servers -m service -a "name=httpd state=restarted"
+10.sysctl模块远程主机sysctl配置
+开启路由转发功能
+ansible -i /etc/ansible/hosts web-servers -m sysctl -a "name=net.ipv4.ip_forward value=1 reload=yes"
+
+11.user模块远程主机用户管理
+
+ansible -i /etc/ansible/hosts web-servers -m user -a "name=xuegod6 state=present" #present目前
+
+
+自动化部署LAMP
+
+首先，我们可以在ansible服务器上安装LAMP环境，然后，再将配置文件通过ansible拷贝到远程主机上
+第一步：安装httpd软件
+[root@xuegod63 ~]# yum install httpd -y
+第二部：安装MySQL
+root@xuegod63 ~]# yum install mariadb-server  mariadb  -y
+[root@xuegod63 ~]# mkdir -p  /mydata/data? ?  #创建目录作为数据存放的位置
+[root@xuegod63 ~]# chown -R mysql:mysql /mydata/
+[root@xuegod63 ~]# vim /etc/my.cnf   #改变数据存放目录
+改：2 datadir=/var/lib/mysql 
+为：2 datadir=/mydata/data? ? 
+[root@xuegod63 ~]# systemctl start mariadb
+第三步：安装PHP和php-mysql模块
+[root@xuegod63 ~]# yum install php php-mysql -y
+第四步：提供php的测试页
+[root@xuegod63 ~]# vim /var/www/html/index.php
+<?php
+? ? phpinfo();
+?>
+启动httpd服务，在浏览器中访问
+[root@xuegod63 ~]# systemctl restart httpd 
+[root@xuegod63 ~]# iptables -F
+测试：http://192.168.1.63/index.php
+
+29.4.2  使用playbook创建一个LAMP构建的任务
+1、创建相关文件
+[root@xuegod63 ~]# mkdir -pv /etc/ansible/lamp/roles/{prepare,httpd,mysql,php}/{tasks,files,templates,vars,meta,default,handlers}
+我们将上面搭建成功的LAMP环境的httpd和MySQL的配置文件拷贝到对应目录下
+[root@xuegod63 ~]# cd /etc/ansible/ 
+[root@xuegod63 ~]# cp /etc/httpd/conf/httpd.conf /etc/ansible/lamp/roles/httpd/files/
+[root@xuegod63 ~]# cp /etc/my.cnf /etc/ansible/lamp/roles/mysql/files/
+
+vim /etc/ansible/lamp/roles/prepare/tasks/main.yml
+- name: delete yum config
+  shell: rm -rf /etc/yum.repos.d/*  #删除原有的yum配置文件
+- name: provide yumrepo file
+  shell: wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
+- name: clean the yum repo
+  shell: yum clean all
+- name: clean the iptables
+  shell: iptables -F
+
+
+
+2、构建httpd的任务
+cd /etc/ansible/lamp/roles 
+mv /var/www/html/index.php httpd/files/
+[root@xuegod63 roles]# vim httpd/tasks/main.yml   #将以下内容复制到文件中
+- name: web server install
+  yum: name=httpd state=present  #安装httpd服务
+- name: provide test page
+  copy: src=index.php dest=/var/www/html  #提供测试页
+- name: delete apache config
+  shell: rm -rf  /etc/httpd/conf/httpd.conf
+- name: provide configuration file
+  copy: src=httpd.conf dest=/etc/httpd/conf/httpd.conf
+  notify: restart httpd
+ 
+扩展
+notify： 这个action可用于在每个play的最后被触发，这样可以避免多次有改变发生时，每次都执行指定的操作，取而代之，仅在所有的变化发生完成后一次性地执行指定操作。
+在notify中列出的操作称为handler，也即notify中调用handler中定义的操作。
+---- name: test.yml just for test  
+    hosts: testserver  
+    vars:    
+        region: ap-southeast-1  
+    tasks:    
+        - name: template configuration
+          file      template: src=template.j2 dest=/etc/foo.conf      
+    notify:          
+        - restart memcached          
+        - restart apache  
+    handlers:    
+          - name: restart memcached      
+            service: name=memcached state=restarted    
+          - name: restart apache      
+            service: name=apache state=restarted
+handlers概述：
+Handlers 也是一些 task 的列表,通过名字来引用,它们和一般的 task 并没有什么区别。
+Handlers 是由通知者进行notify, 如果没有被 notify，handlers 不会执行。
+不管有多少个通知者进行了notify，等到 play 中的所有 task 执行完成之后,handlers 也只会被执行一次。
+Handlers 最佳的应用场景是用来重启服务,或者触发系统重启操作.除此以外很少用到了。
+
+
+3、构建httpd的handlers
+[root@xuegod63 roles]# vim httpd/handlers/main.yml
+- name: restart httpd
+  service: name=httpd enabled=yes state=restarted
+4、部署我们的mariadb数据库
+创建MySQL服务的任务，需要安装MySQL服务，改变属主信息，启动MySQL
+[root@xuegod63 roles]# cd /etc/ansible/lamp/roles 
+[root@xuegod63 roles]# vim mysql/tasks/main.yml
+- name: install the mysql
+  yum: name=mariadb-server state=present
+- name: mkdir date directory
+  shell: mkdir -p /mydata/data
+- name: provide configration file
+  copy: src=my.cnf dest=/etc/my.cnf
+- name: chage the owner
+  shell: chown -R mysql:mysql /mydata/*
+- name: start mariadb
+  service: name=mariadb enabled=yes state=started
+5、构建PHP的任务
+[root@xuegod63 roles]# vim php/tasks/main.yml
+- name: install php
+  yum: name=php state=present
+- name: install php-mysql
+  yum: name=php-mysql state=present
+
+6、定义整个的任务
+[root@xuegod63 roles]# cd /etc/ansible/lamp/roles
+[root@xuegod63 roles]# vim site.yml
+- name: LAMP build
+  remote_user: root
+  hosts: web-servers
+  roles:
+    - prepare
+    - mysql
+    - php 
+    - httpd
+
+
+开始部署：
+ansible-playbook -i /etc/ansible/hosts  /etc/ansible/lamp/roles/site.yml
+
+
+
+例1：
+[root@xuegod63 roles]# rm -rf /root/.ssh/known_hosts 
+[root@xuegod63 roles]# ansible-playbook -i /etc/ansible/hosts  ./site.yml   #发现需要输入yes，来保存对端的指纹
+解决：
+[root@xuegod63 roles]# vim /etc/ansible/ansible.cfg
+改：62 #host_key_checking = False   #就是把前面的#号去了
+为：host_key_checking = False  
+[root@xuegod63 roles]# rm -rf /root/.ssh/known_hosts 
+[root@xuegod63 roles]# ansible-playbook -i /etc/ansible/hosts  ./site.yml   #发现不需要输入yes，
