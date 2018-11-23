@@ -1,0 +1,362 @@
+1.1 源码编译安装apache
+将httpd-2.4.28.tar.gz 上传到Linux系统中
+[root@xuegod63 ~]# tar zxvf httpd-2.4.28.tar.gz
+[root@xuegod63 ~]# tar zxvf httpd-2.4.28.tar.gz  -C /usr/local/src/
+[root@xuegod63 ~]# cd /usr/local/src/httpd-2.4.28/
+1.
+[root@xuegod63 httpd-2.4.28]# vim /usr/local/src/httpd-2.4.28/include/ap_release.h  
+40 #define AP_SERVER_BASEVENDOR "Apache Software Foundation"
+ 41 #define AP_SERVER_BASEPROJECT "Apache HTTP Server"
+ 42 #define AP_SERVER_BASEPRODUCT "Apache"
+44 #define AP_SERVER_MAJORVERSION_NUMBER 2
+ 45 #define AP_SERVER_MINORVERSION_NUMBER 4
+ 46 #define AP_SERVER_PATCHLEVEL_NUMBER   27
+ 47 #define AP_SERVER_DEVBUILD_BOOLEAN    0
+为：
+#define AP_SERVER_BASEVENDOR "xuegod"
+#define AP_SERVER_BASEPROJECT " web server"
+#define AP_SERVER_BASEPRODUCT " XWS"
+
+#define AP_SERVER_MAJORVERSION_NUMBER 8
+#define AP_SERVER_MINORVERSION_NUMBER 1
+#define AP_SERVER_PATCHLEVEL_NUMBER   2
+#define AP_SERVER_DEVBUILD_BOOLEAN    3
+注释：
+#define AP_SERVER_BASEVENDOR "Apache Software Foundation" #服务的供应商名称
+#define AP_SERVER_BASEPROJECT "Apache HTTP Server"  #服务的项目名称
+#define AP_SERVER_BASEPRODUCT "Apache"        #服务的产品名
+#define AP_SERVER_MAJORVERSION_NUMBER 2  #主要版本号
+#define AP_SERVER_MINORVERSION_NUMBER 4  #小版本号
+#define AP_SERVER_PATCHLEVEL_NUMBER  6  #补丁级别
+#define AP_SERVER_DEVBUILD_BOOLEAN  0  #
+
+
+源码编译安装apache
+root@xuegod63 ~]# cd /usr/local/src/httpd-2.4.28
+安装apache依赖包：
+[root@xuegod63 httpd-2.4.28]# yum install apr-util apr-util-devel apr apr-devel  pcre pcre-devel   zlib zlib-devel openssl openssl-devel -y  
+[root@xuegod63 httpd-2.4.28]# ./configure --prefix=/usr/local/apache2.4-xuegod --enable-so --enable-rewrite --enable-ssl   --enable-deflate  --enable-expires 
+[root@xuegod63 httpd-2.4.28]# make -j  4  #把源代码编译成可执行的二进制文件。
+
+
+
+实战经验：  公司mysql数据库经常使用CPU达到230%，正常吗？   服务器是4核的。
+
+1、登陆IDC机房查看服务器流量图，流量正常，排除故障与流量无关。
+2、为了快速解决问题，可以先直接重启mysql服务后，再查sysql进程CPU使用率依旧高居不下。
+3.登陆mysql数据库,执行show processlist;查看当前正在执行的sql语句，发现几个表出现“sending data”状态，sql执行时间过长。
+4、通知开发人员检查这几个表有没有增加索引，让开发查看一下。
+5、 在mysql配置文件my.cnf中增加以下参数：tmp_table_size=300M和query_cache_size=1024M希望通过增加临时表及查询缓存大小来解决问题，增加这两个参数后，发现CPU占用率有所下降，有一定效果，但还是超过100%。网站打开依旧缓慢。
+6、继续登陆mysql,执行show index from tablename,查询出现“sending data”的几个表，发现果然没有增加索引。
+7、执行增加索引的语句，把出现“sending data”的几个表全部加上索引。
+ALTER TABLE table_name ADD INDEX index_name (column_list)  #增加普通索引
+ALTER TABLE table_name ADD UNIQUE (column_list)    #增加唯一性索引
+ALTER TABLE table_name ADD PRIMARY KEY (column_list)   #增加主键索引
+注：Primary key和UNIQUE KEY区别
+1，Primary key的1个或多个列必须为NOT NULL，如果列为NULL，在增加PRIMARY KEY时，列自动更改为NOT NULL。而UNIQUE KEY 对列没有此要求 
+2，一个表只能有一个PRIMARY KEY，但可以有多个UNIQUE KEY
+
+总结：重启mysql服务后，mysql进程的CPU占用率恢复正常，网站正常登陆，至此故障得到解决。通知同事验证。后期工作中，可以和开发人员说一下，需要大量查询的表中一定要加索引。
+
+
+[root@xuegod63 httpd-2.4.28]# make install
+
+
+启动apache：
+配置apache 可以开机启动并且可以使用service 命令启动apache服务器
+[root@xuegod63 httpd-2.4.28]# cp /usr/local/apache2.4-xuegod/bin/apachectl /etc/init.d/apachectl-xuegod
+
+启动apache：
+[root@xuegod63 httpd-2.4.28]#  /etc/init.d/apachectl-xuegod start
+[root@xuegod63 httpd-2.4.28]#   iptables -F
+
+
+
+
+[root@xuegod63 ~]# curl -I 192.168.1.63   #看不到apache版本相关内容了
+HTTP/1.1 200 OK
+Date: Sat, 29 Aug 2015 09:43:44 GMT
+Server: XWS/8.1.2-dev (Unix) mod_ssl/8.1.2-dev OpenSSL/1.0.0-fips
+
+16.1.3  再次隐藏系统类型和模块的版本号
+接下来再次修改：
+[root@xuegod63 ~]#  vim /usr/local/apache2.4-xuegod/conf/httpd.conf
+改：488  #Include conf/extra/httpd-default.conf
+为：  Include conf/extra/httpd-default.conf
+
+2）打开httpd-default.conf文件，修改如下两个地方
+[root@xuegod63 ~]#  vim /usr/local/apache2.4-xuegod/conf/extra/httpd-default.conf  
+改：
+55 ServerTokens Full   
+65 ServerSignature On
+为：
+ServerTokens Prod   #不显示服务器操作系统类型 令牌
+ServerSignature Off   #如果就是off，不用修改，签名
+
+让apache配置文件生效的方法：
+方法1：重启服务： restart   #这是粗人行为， 会中断正在进行的连接
+方法2：不重启服务，重新加载配置文件 ，reload是nginx，这里不能使用
+[root@xuegod63 ~]# /etc/init.d/apachectl-xuegod graceful
+测试：
+[root@xuegod63 ~]# curl -I 192.168.1.63
+HTTP/1.1 200 OK
+Date: Thu, 14 Jan 2016 02:31:24 GMT
+Server: XWS
+
+16.1.4  让apache开机启动，还要再在apachectl文件的头部的注释中加两条命令。
+[root@xuegod63 apache2.4-xuegod]# vim /etc/init.d/apachectl-xuegod   #在第1行，插入以下红色内容
+#!/bin/sh
+# chkconfig: 2345 64 36  
+# description: apache-xuegod
+
+
+设置开机自动启动：
+[root@xuegod63 apache2.4-xuegod]#  chkconfig --add apachectl-xuegod 
+[root@xuegod63 apache2.4-xuegod]#  chkconfig  --list  apachectl-xuegod
+测试：
+[root@xuegod63 apache2.4-xuegod]# reboot  #重启系统后，查看apache已经开机启动了
+[root@xuegod63 ~]# iptables -F  #清空规则
+[root@xuegod63 ~]# netstat -antup | grep 80
+tcp        0      0 192.168.1.63:33964      192.168.1.63:80         TIME_WAIT   -                   
+tcp6       0      0 :::80              :::*             LISTEN      1139/httpd  
+
+
+[root@xuegod63 ~]# useradd -M -s /sbin/nologin apache   #创建apache用户 -M不建立用户目录
+
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf
+改：
+165 User daemon
+166 Group daemon
+为：
+165 User apache
+166 Group apache
+
+[root@xuegod63 ~]# /etc/init.d/apachectl-xuegod graceful
+
+
+apache目录及文件权限设置， 不能给777权限
+在生产环境的网站架构中，我们应把资源文件的权限做好配置。
+例：用户上传的图片及附件等和程序做好分离。这样才能更方便我们做好授权，保证apache服务和整个服务器安全。
+这里我们设置apache的网站目录属主和属组是apache:
+
+chown apache:apache /usr/local/apache2.4-xuegod/htdocs/ -R
+
+
+16.1.7
+对日志的授权，我们要将属主和属组都设置为root：
+[root@xuegod63 ~]# chown root:root /usr/local/apache2.4-xuegod/logs/ -R
+注：由于apache日志的记录是由apache的主进程进行操作的，而apache的主进程又是root用户启动的，所以这样不影响日志的输出。这也是日志记录的最安全的方法。
+
+16.1.7  使用cronolog分割apache日志
+
+下载并安装cronolog
+[root@xuegod63?~]#yum install epel-release -y
+[root@xuegod63?~]#yum install cronolog -y 
+
+16.1.8  配置apache使用cronolog
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf
+将配置文件中的CustomLog和ErrorLog替换
+改：
+324 CustomLog "logs/access_log" common
+为：
+324 CustomLog "|/usr/sbin/cronolog /usr/local/apache2.4-xuegod/logs/access_%Y%m%d.log" combined
+
+改：295 ErrorLog "logs/error_log"
+为：295 ErrorLog "|/usr/sbin/cronolog /usr/local/apache2.4-xuegod/logs/error_%Y%m%d.log"
+
+更多日志格式参考：
+按天轮询（生产环境常见用法，推荐使用）：
+CustomLog "|/usr/local/sbin/cronolog /app/logs/access_www_%Y%m%d.log" combined
+按小时轮询（生产环境较常见用法）：
+CustomLog "|/usr/local/sbin/cronolog  /app/logs /access_www_ %Y%m%d%H.log" combined
+
+
+
+16.2.1  错误页面优雅显示
+
+方法一：
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf  #在根目录的标签中添加以下红色标记内容。
+221 <Directory "/usr/local/apache2.4-xuegod/htdocs">  #在这行下面添加如下内容：
+222     ErrorDocument 404 /404.html
+
+[root@xuegod63 ~]# echo "404 go to home" > /usr/local/apache2.4-xuegod/htdocs/404.html
+
+
+第二种方法：遇到404错误后，直接跳转到一个http链接上
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf
+改： 222     ErrorDocument 404 /404.html
+为：   ErrorDocument 404 http://www.xuegod.cn #将404错误跳转到http://www.xuegod.cn页面上
+[root@xuegod63 ~]# /etc/init.d/apachectl-xuegod restart
+
+
+启用压缩模块mod_deflate
+
+1、mod_deflate模块检查及安装
+检查：
+[root@xuegod63 apache2.4-xuegod]# /usr/local/apache2.4-xuegod/bin/apachectl -M | grep deflate #如果没有弹出任何内容，说明没有安装
+
+如果安装了，将弹出以下内容：
+[root@xuegod63 src]# /usr/local/apache2.4-xuegod/bin/apachectl -M  | grep deflate
+deflate_module (static)  #弹出此种结果，则为编译安装时装的
+[root@xuegod63 src]# /usr/local/apache2/bin/apachectl -M | grep deflate
+ deflate_module (shared)  #弹出此种结果，则为DSO方式安装的
+
+安装了的话，就可以直接进行压缩配置了，如果没有安装，下面为安装方法
+a）编译时安装方法
+编译的时候跟上--enable-deflate即可实现安装
+b）DSO方式安装。
+扩展：DSO： Dynamic shared object动态共享对象 。DSO模块可以在编译服务器之后编译，也可以用Apache扩展工具(apxs)编译并增加
+使用DSO方式安装，/usr/local/apache2.4-xuegod/bin/apxs后跟的参数详解
+-c  此选项表明需要执行编译操作。
+-i  此选项表示需要执行安装操作，以安装一个或多个动态共享对象到服务器的modules目录。
+-a  此选项自动增加一个LoadModule行到httpd.conf文件中，以激活此模块，或者，如果此行已经存在，则启用之。
+
+[root@xuegod63 apache2.4-xuegod]# cd /usr/local/src/httpd-2.4.28/modules/filters/
+
+[root@xuegod63 filters]# /usr/local/apache2.4-xuegod/bin/apxs -c -i -a  /usr/local/src/httpd-2.4.28/modules/filters/mod_deflate.c
+ #以dso的方式编译安装到apache中
+[root@xuegod63 filters]# ll /usr/local/apache2.4-xuegod/modules/mod_deflate.so
+#成功安装这里会显示出该文件mod_deflate.so
+查看是否安装了模块：
+[root@xuegod63 filters]# /usr/local/apache2.4-xuegod/bin/apachectl -M  | grep deflate  
+报错：
+httpd: Syntax error on line 105 of /usr/local/apache2.4-xuegod/conf/httpd.conf: Cannot load modules/mod_deflate.so into server: /usr/local/apache2.4-xuegod/modules/mod_deflate.so: undefined symbol: inflate
+解决方法:
+在： 105 LoadModule deflate_module     modules/mod_deflate.so  上面一行，插入以下内容：
+LoadFile /usr/lib64/libz.so
+
+[root@xuegod63 filters]# /usr/local/apache2.4-xuegod/bin/apachectl -M  | grep deflate  
+ deflate_module (shared) #可以看出来已经加载
+
+
+
+
+1、配置压缩参数
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf   #确认下面这一行是打开的。默认是打开的。
+105 LoadModule deflate_module     modules/mod_deflate.so   #此行解锁后再进行下面操作，不然下面的操作会报错。
+[root@xuegod63 ~]# vim  /usr/local/apache2.4-xuegod/conf/httpd.conf  #在以下内容后，插入：
+169 </IfModule>  之后添加以下内容：
+<Ifmodule mod_deflate.c>
+   DeflateCompressionLevel 9   
+   SetOutputFilter DEFLATE  
+   DeflateFilterNote Input instream 
+   DeflateFilterNote Output outstream 
+   DeflateFilterNote Ratio ratio  
+   AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript   
+</Ifmodule>
+
+
+注：
+1、如果是虚拟机，需要在<VirtualHost*:80></VirtualHost>中添加配置即可实现压缩
+2、图片和视频本身就是压缩格式，一般不需要压缩的。有些小图片和视频压缩后还会变大。
+
+
+总结：我们在企业生产环境中时，在启用mod_deflate时，一定要注意，对于太小的文件和某些格式的图片不要对它们进行压缩，有可能越压越大。
+扩展：AddOutputFilterByTypeDEFLATE后跟的所有的压缩文件类型，后期可以参照选择。
+text/plain text/html text/php text/xml text/css text/javascript
+application/xhtml+xml application/xml application/rss+xml application/atom_xml application/x-javascript application/x-httpd-php 
+image/svg+xml image/gif image/png  image/jpe image/swf image/jpeg image/bmp
+
+
+16.2.5  mod_expires： 设置网页缓存时间
+
+  mod_expires模块检查及安装
+检查mod_expires模块是否安装的方法如下：
+[root@xuegod63 ~]# /usr/local/apache2.4-xuegod/bin/apachectl -M | grep expires
+ expires_module (static)  #此种结果为编译安装时装的
+[root@xuegod63 ~]# /usr/local/apache2.4-xuegod/bin/apachectl -M | grep expires
+ expires_module (shared)  #此种结果为DSO方式安装的
+安装了的话，就可以直接进行压缩配置了，如果没有安装，下面为安装方法
+a）编译方式安装
+编译的时候跟上--enable-expires即可实现安装
+b）DSO方式安装
+[root@xuegod63 htdocs]# cd /usr/local/src/httpd-2.4.28/modules/metadata/  #切到apache源码包mod_expires所在的目录下
+[root@xuegod63 metadata]# ls mod_expires.c 
+mod_expires.c
+
+#以dso的方式编译安装到apache中
+[root@xuegod63 metadata]#  /usr/local/apache2.4-xuegod/bin/apxs -c -i -a /usr/local/src/httpd-2.4.28/modules/metadata/mod_expires.c
+#检查mod_deflate是否安装，成功安装这里会显示出该文件
+[root@xuegod63 metadata]# ll /usr/local/apache2.4-xuegod/modules/mod_expires.so
+
+
+
+2、配置缓存参数
+注意如果我们是编译安装时已经编译进去的，要先解锁以下行，再进行下面操作，不然会报错。
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf  #确认这一行是开启的。
+113 LoadModule expires_module     modules/mod_expires.so
+
+缓存的用法有3种，分别问对全局，对目录，对虚拟主机。
+1、对全局
+对全局的配置就是在apache主配置文件httpd.conf的中加入如下参数即可
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf  #在最后添加以下内容：
+在169 </IfModule> 下面插入以下内容：
+<IfModule mod_expires.c>  
+ExpiresActive on
+    ExpiresDefault "access plus 12 month"
+    ExpiresByType text/html "access plus 12 months"
+    ExpiresByType text/css "access plus 12 months"
+    ExpiresByType image/gif "access plus 12 months"
+    ExpiresByType image/jpeg "access plus  12 months"
+    ExpiresByType image/jpg "access plus 12 months"
+    ExpiresByType image/png "access plus 12 months"
+    EXpiresByType application/x-shockwave-flash "access plus 12 months"
+    EXpiresByType application/x-javascript "access plus 12 months"
+ExpiresByType video/x-flv "access plus 12 months"
+</IfModule>
+重启服务：
+[root@xuegod63 ~]# /etc/init.d/apachectl-xuegod restart
+
+
+
+
+2、对目录
+对目录的配置就是在apache主配置文件中<Directory></Directory>标签内，最后加入如下参数即可
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf
+133 <Directory "/usr/local/apache2.4-xuegod/htdocs">   
+    <IfModule mod_expires.c>  
+ExpiresActive on
+    ExpiresDefault "access plus 12 month"
+    ExpiresByType text/html "access plus 12 months"
+    ExpiresByType text/css "access plus 12 months"
+    ExpiresByType image/gif "access plus 12 months"
+    ExpiresByType image/jpeg "access plus  12 months"
+    ExpiresByType image/jpg "access plus 12 months"
+    ExpiresByType image/png "access plus 12 months"
+    EXpiresByType application/x-shockwave-flash "access plus 12 months"
+    EXpiresByType application/x-javascript "access plus 12 months"
+ExpiresByType video/x-flv "access plus 12 months"
+</IfModule>
+
+</Directory>
+
+
+c）对虚拟主机
+对虚拟主机的配置就是在apache的虚拟主机配置文件httpd-vhost.conf中添加如下参数即可
+[root@xuegod63 ~]# vim /usr/local/apache2.4-xuegod/conf/httpd.conf
+<VirtualHost *:80>
+    ServerAdmin 888@qq.com
+    DocumentRoot "/www/html"
+    ServerName www.sunsky.pw
+    ServerAlias sunsky.pw
+CustomLog "|/usr/local/sbin/cronolog /app/logs/www_access_%Y%m%d.log" combined
+ErrorLog "|/usr/local/sbin/cronolog /app/logs/www_error_%Y%m%d.log"
+<IfModule mod_expires.c>  
+ExpiresActive on
+    ExpiresDefault "access plus 12 month"
+    ExpiresByType text/html "access plus 12 months"
+    ExpiresByType text/css "access plus 12 months"
+    ExpiresByType image/gif "access plus 12 months"
+    ExpiresByType image/jpeg "access plus  12 months"
+    ExpiresByType image/jpg "access plus 12 months"
+    ExpiresByType image/png "access plus 12 months"
+    EXpiresByType application/x-shockwave-flash "access plus 12 months"
+    EXpiresByType application/x-javascript "access plus 12 months"
+ExpiresByType video/x-flv "access plus 12 months"
+</IfModule>
+</VirtualHost>
+以上三种配置任何一种配置之后，对apache服务器进行优化重启，然后用火狐或者google游览器的
+
+测试：
+[root@xuegod63 metadata]# cd /usr/local/apache2.4-xuegod/htdocs
+[root@xuegod63 htdocs]# rz   #上传一张图片a.jpg 到apache的网站目录下
