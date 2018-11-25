@@ -1,0 +1,271 @@
+--安装部署
+
+1、修改yum源
+[root@redis ~]# vim /etc/yum.repos.d/epel.repo#添加这个文件
+[epel]
+name=Extra Packages for Enterprise Linux 6 - $basearch
+baseurl=http://download.fedoraproject.org/pub/epel/6/$basearch
+failovermethod=priority
+enabled=1
+gpgcheck=0
+
+[nginx]
+name=nginx repo
+baseurl=http://nginx.org/packages/centos/6/$basearch/
+gpgcheck=0
+enabled=1
+
+
+2、yum安装
+[root@redis ~]# yum -y install nginx php php-fpm php-cli php-common php-gd php-mbstring php-mysql php-pdo php-devel php-xmlrpc php-xml php-bcmath php-dba php-enchant mysql mysql-server
+
+
+3、简单配置一下nginx
+[root@su02 test]# cat /etc/nginx/nginx.conf 
+
+user  nginx;
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/logs/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+server {
+        listen       80;
+        #定义使用www.xx.com访问
+        server_name  www.su02.com;
+
+        #设定本虚拟主机的访问日志
+        access_log  /var/logs/nginx/access.log  main;
+
+        #默认请求
+        location / {
+          root   /var/www/;      #定义服务器的默认网站根目录位置
+          index index.php index.html index.htm;   #定义首页索引文件的名称
+        }
+        location ~ \.php$ {
+        root /var/www/;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME /var/www/$fastcgi_script_name;
+        include fastcgi_params;
+        }
+    }
+
+    #gzip  on;
+
+  #  include /etc/nginx/conf.d/*.conf;
+}
+
+comment this line
+# include /etc/nginx/conf.d/*.conf;
+
+
+[root@su02 ~]# mkdir -p /var/logs/nginx
+[root@su02 ~]# chown -R nginx:nginx /var/logs/
+
+service nginx start
+
+
+4、启动服务
+[root@redis ~]# sed -i 's/apache/nginx/g' /etc/php-fpm.d/www.conf
+[root@redis ~]# /etc/init.d/php-fpm start
+正在启动 php-fpm：[确定]
+
+[root@redis ~]# /etc/init.d/mysqld start
+正在启动 mysqld：[确定]
+
+[root@redis ~]# mkdir /{logs,www}
+[root@redis ~]# chown -R nginx:nginx /{logs,www}
+[root@redis ~]# /etc/init.d/nginx start
+正在启动 nginx： [确定]
+
+[root@redis www]# service iptables stop
+iptables: Flushing firewall rules: [OK]
+iptables: Setting chains to policy ACCEPT: filter [OK]
+iptables: Unloading modules: [OK]
+
+[root@redis redis]# netstat -tnlp#查看监听
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local AddressForeign AddressState   PID/Program name 
+tcp  0  0 0.0.0.0:80      0.0.0.0:*       LISTEN  2101/nginx      
+tcp  0  0 127.0.0.1:9000    0.0.0.0:*       LISTEN  7544/php-fpm  
+tcp  0  0 0.0.0.0:3306      0.0.0.0:*       LISTEN  1871/mysqld
+
+vim /var/www/index.php
+
+<?php
+ phpinfo();
+?>
+
+5、给mysql授权
+[root@redis ~]# mysql
+mysql> grant all privileges on *.* to root@localhost identified by '123456';
+
+mysql> flush privileges;
+
+
+-- 安装redis
+
+1、安装redis
+[root@redis ~]# wget -c -t 0http://download.redis.io/releases/redis-2.8.19.tar.gz
+
+[root@redis ~]# mkdir /usr/local/redis
+
+[root@redis ~]# tar xvf redis-2.8.19.tar.gz
+#安装很简单、直接make就可以了
+[root@redis ~]# cd redis-2.8.19
+[root@redis redis-2.8.19]# make
+
+#编译完成后，将src中的可执行文件拷贝到刚刚创建的目录中
+[root@redis src]# cp redis-benchmark redis-check-aof redis-check-dump redis-cli redis-sentinel redis-server /usr/local/redis/
+[root@redis redis-2.8.19]# cp redis.conf sentinel.conf /usr/local/redis/
+
+--启动redis服务
+/usr/local/redis/redis-server
+
+
+
+
+Redis-benchmark  压力测试工具
+Redis-check-aof  检查redis持久化命令文件的完整性
+Redis-check-dump 检查redis持久化数据文件的完整性
+Redis-cli    redis在linux上的客户端
+Redis-sentinel   redis-sentinel是集群管理工具,主要负责主从切换。
+Redis-server   Redis服务器的daemon启动程序
+
+
+-- 安装php的redis扩展
+
+[root@redis ~]# wget -c -t 0https://github.com/owlient/phpredis/archive/master.zip
+[root@redis ~]# unzip master.zip
+
+[root@redis ~]# cd phpredis-master/
+[root@redis phpredis-master]# phpize
+[root@redis phpredis-master]# ./configure --with-php-config=/usr/bin/php-config
+[root@redis phpredis-master]# make && make install
+
+#修改php的配置文件，如果没有“extension=redis.so”，就加上这一行
+[root@redis ~]# vim /etc/php.ini
+extension=redis.so
+
+[root@redis ~]# /etc/init.d/php-fpm restart
+停止 php-fpm：               [确定]
+正在启动 php-fpm：             [确定]
+
+
+
+查看php是否已经成功支持 redis
+
+
+调整部分redis的配置文件
+
+vim /usr/local/redis/redis.conf
+
+daemonize yes
+#可修改默认监听端口
+port 6379
+     #修改生成默认日志文件位置
+     logfile "/var/logs/redis/redis.log"
+     #配置持久化文件存放位置
+      dir /usr/local/redis/redisData
+
+
+--启动redis
+/usr/local/redis/redis-server
+
+
+
+五、PHP模拟Redis给mysql数据库加速过程
+1、在mysql中插入一些测试数据
+
+[root@redis ~]# mysql -u root -p123456
+mysql> create database mytest;
+mysql> CREATE TABLE `test` (`id` int(7) NOT NULL AUTO_INCREMENT, `name` char(8) DEFAULT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+mysql> INSERT INTO `test` VALUES (1,'sven'),(2,'jim'),(3,'zhu'),(4,'wang'),(5,'ftd'),(6,'test'),(7,'test01'),(8,'test02'),(9,'test03');
+mysql> select * from mytest.test;
++----+--------+
+| id | name |
++----+--------+
+|1 | sven |
+|2 | jim  |
+|3 | zhu  |
+|4 | wang |
+|5 | ftd  |
+|6 | test |
+|7 | test01 |
+|8 | test02 |
+|9 | test03 |
++----+--------+
+
+编写php的测试代码
+
+<?php
+ $redis = new Redis();
+ $redis->connect('127.0.0.1',6379) or die ("could net connect redis server");
+ $query = "select * from test limit 8";
+ //为了简单一点，这里就读取了8条数据
+ for ($key = 1; $key < 9; $key++)
+ {
+ if (!$redis->get($key))
+ {
+ $connect = mysql_connect('127.0.0.1','root','123456');
+ mysql_select_db(mytest);
+ $result = mysql_query($query);
+ //如果没有找到$key,就将该查询sql的结果缓存到redis
+ echo "RESULTS FROM MYSQL";
+ echo "<hr>";
+ while ($row = mysql_fetch_assoc($result))
+ {
+ $redis->set($row['id'],$row['name']);
+ $id=$row['id'];$name=$row['name'];
+                echo "number is <b><font color=#225511>$id</font></b>";
+                echo "<br>";
+                echo "name is <b><font color=#225511>$name</font></b>";
+                echo "<br>";
+
+ }
+ $myserver = 'mysql';
+ exit ;
+ }
+ else
+ {
+ $myserver = "redis";
+ $data[$key] = $redis->get($key);
+ }
+ }
+
+ echo "RESULTS FROM REDIS ";
+ echo "<hr>";
+
+ for ($key = 1; $key < 9; $key++)
+ {
+ echo "number is <b><font color=#FF0000>$key</font></b>";
+
+ echo "<br>";
+
+ echo "name is <b><font color=#FF0000>$data[$key]</font></b>";
+
+ echo "<br>";
+ }
+?>
