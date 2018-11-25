@@ -1,16 +1,18 @@
+apr-1.5.2.tar.gz
+apr-util-1.5.4.tar.gz
+httpd-2.4.28.tar.gz
+
 1. 源码编译安装apache
 将httpd-2.4.28.tar.gz 上传到Linux系统中
 
-
-yum install apr-util apr-util-devel apr apr-devel pcre pcre-devel zlib zlib-devel openssl openssl-devel gcc cmake gcc-c++ -y
+yum install apr-util apr-util-devel apr apr-devel pcre pcre-devel zlib zlib-devel openssl openssl-devel gcc cmake gcc-c++ -y #少包会报错
 yum install lrzsz -y
 
-
-#tar xvzf apr-1.5.2.tar.gz 
+tar xvzf apr-1.5.2.tar.gz 
 cd apr-1.5.2 
 ./configure --prefix=/usr/local/apr 
 
-make 
+make
 make install 
 tar xf apr-util-1.5.4.tar.gz
 ls
@@ -19,36 +21,21 @@ cd apr-util-1.5.4
 make
 make install
 
-
-
 tar zxvf httpd-2.4.28.tar.gz -C /usr/local/src/
  
-
 envnt模式需要编译安装apr
 
-
-
+cd /usr/local/src/httpd-2.4.28
 ./configure --prefix=/usr/local/apache --sysconfdir=/etc/httpd --enable-so --enable-ssl --enable-cgi --enable-rewrite --with-zlib --with-pcre --with-apr=/usr/local/apr --enable-deflate --with-apr-util=/usr/local/apr-util --enable-modules=most --enable-mpms-shared=all --with-mpm=event
 
- 
-
-
-cd /usr/local/src/httpd-2.4.28
-
-[root@xuegod63 httpd-2.4.28]# yum install apr-util apr-util-devel apr apr-devel pcre pcre-devel zlib zlib-devel openssl openssl-devel gcc cmake gcc-c++ -y #gcc 记得安装不然编辑报错
 [root@xuegod63 httpd-2.4.28]# ./configure --prefix=/usr/local/apache --enable-so --enable-rewrite --enable-ssl --enable-deflate --enable-expires
 [root@xuegod63 httpd-2.4.28]# make -j 4
 [root@xuegod63 httpd-2.4.28]# make install
-
- 
-
- cp /usr/local/apache/bin/apachectl /etc/init.d/apachectl
-
+cp /usr/local/apache/bin/apachectl /etc/init.d/apachectl
 vi /usr/local/apache/conf/httpd.conf
-ServerName lcalhost:80 #启动前修改不然报错
-
+vi /etc/httpd/httpd.conf
+ServerName localhost:80 #启动前修改不然报错
 
 启动apache：
-
 /etc/init.d/apachectl start
 iptables -F
