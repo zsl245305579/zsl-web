@@ -1,0 +1,174 @@
+yum -y install xinetd rsync
+rsync --daemon
+netstat -antup | grep 873
+
+
+使用rsync备份数据
+对XueGod63网站根目录的/var/www/html目录备份到XueGod64的/web-back
+源服务器:XueGod63 
+目标服务器:XueGod64 
+建立测试用户
+[root@XueGod64 ~]# useradd rget1 ; echo rget1:123456 | chpasswd
+[root@XueGod63 ~]# useradd rget1 ; echo rget1:123456 | chpasswd
+
+[root@xuegod63 ~]# mkdir /var/www/html/ -p
+[root@XueGod63 ~]# setfacl -R -m user:rget1:rwx /var/www/html/  //设置rget1的权限
+[root@XueGod63~]# setfacl -R -m default:rget1:rwx /var/www/html/
+[root@XueGod63 ~]# getfacl /var/www/html
+getfacl:Removing leading'/'from absolute path names
+# file: var/www/html
+# owner: root
+# group: root
+user::rwx
+user:rget1:rwx
+group::r-x
+mask::rwx
+other::r-x
+default:user::rwx
+default:user:rget1:rwx
+default:group::r-x
+default:mask::rwx
+default:other::r-x
+
+创建测试数据
+[root@XueGod63 ~]# cp -r /boot/* /var/www/html/ //boot目录下的所有数据作为测试数据
+[root@xuegod64 ~]# mkdir /web-back
+[root@xuegod64 ~]# chown rget1:rget1 -R /web-back/
+[root@XueGod63 ~]#rsync -avz --delete /var/www/html/ rget1@192.168.0.64: /web-back/
+
+
+
+非系统用户备份数据
+使用系统配置文件/etc/rsyncd.conf来备份数据，创建备份账户，最后把rsync以deamon方式运行
+
+
+
+
+
+[root@XueGod64 ~]# vim /etc/rsyncd.conf //文件不存在，需要自己创建
+uid = root#运行进程的身份
+gid = root#运行进程的组
+address =192.168.0.64#监听IP
+port=873 #监听端口
+hosts allow=192.168.0.0/24#允许同步客户端的IP地址，可以是网段，或者用*表示所有192.168.1.0/24或192.168.1.0/255.255.255.0
+use chroot = yes #是否囚牢，锁定家目录，rsync被黑之后，黑客无法再rsync运行的家目录之外创建文件，选项设置为yes
+max connections=5#最大连接数
+pid file =/var/run/rsyncd.pid #进程PID，自动生成
+lock file =/var/run/rsync.lock #指max connectios参数的锁文件
+log file =/var/log/rsyncd.log #日志文件位置
+motd file =/etc/rsyncd.motd
+#客户端登陆之后弹出的消息，需要创建
+
+[wwwroot]#共享模块名称
+path =/web-back/ #路径
+comment=used for web-data root#描述
+readonly=false#设置服务端文件读写权限
+list=yes#是否允许查看模块信息
+auth users=rsyncuser#备份的用户，和系统用户无关
+secrets file=/etc/rsync.passwd#存放用户的密码文件，格式是用户名：密码
+创建提示文件和用户密码
+
+
+
+[root@XueGod64 ~]# echo "Welcome to Backup Server" > /etc/rsyncd.motd
+[root@XueGod64 ~]# vim /etc/rsync.passwd
+rsyncuser:password123
+[root@XueGod64 ~]# chmod 600 /etc/rsync.passwd//目录权限必须是700或者600，否则的话身份验证会失效，设置rsync user的时候
+启动服务测试
+启动rsync与xinetd服务
+systemctl start xinetd#启动xinetd服务
+systemctl enable xinetd#将xinetd服务加入开机项
+rsync--daemon--config=/etc/rsyncd.conf#加载配置文件rsyncd.conf启动rsync服务
+[root@xuegod64  ~]# rsync --daemon --config=/etc/rsyncd.conf
+[root@xuegod64  ~]# netstat -antup | grep :873
+测试，rsync语法：rsync选项 用户名@备份源服务器IP::共享模块名 目标目录
+[root@XueGod63 ~]# rsync -avz --delete  /var/www/html rsyncuser@192.168.0.64::wwwroot
+
+Welcome to Backup Server
+Password:#输入密码password123
+
+
+新建一个文件保存好密码，然后在rsync命令中使用--password-file指定此文件即可
+[root@xuegod63 ~]# vim /etc/rsync.passwd
+password123 
+[root@xuegod63 ~]# chmod 600  /etc/rsync.passwd
+[root@xuegod63 ~]#rsync -avz --delete  /var/www/html rsyncuser@192.168.0.64::wwwroot --password-file=/etc/rsync.passwd 
+脚本实现定时自动备份
+[root@xuegod63 ~]# vim autobackup.sh
+#!/bin/bash
+rsync -avz --delete  /var/www/html rsyncuser@192.168.0.64::wwwroot --password-file=/opt/passfile 
+[root@xuegod63 ~]# chmod +x autobackup.sh
+[root@XueGod64 ~]# rm -rf /web-back/*//测试脚本
+[root@xuegod63~]# sh autobackup.sh
+[root@XueGod64 ~]# echo "01 3 * * * sh /root/autoback.sh &" >> /var/spool/cron/root
+
+
+Rsync+sersync实现数据实时同步
+一台装sersync一台装rsync服务
+Sersync服务器（数据源,源机器）：192.168.0.63
+Rsync服务器（备份端,目标机器）：192.168.0.64
+
+一、为什么要用rsync+sersync架构？
+1、sersync是基于inotify开发的，类似于inotify-tools的工具
+2、sersync可以记录下被监听目录中发生变化的（包括增加、删除、修改）具体某一个文件或者某一个目录的名字，然后使用rsync同步的时候，只同步发生变化的文件或者目录
+
+wget https://sersync.googlecode.com/files/sersync2.5.4_64bit_binary_stable_final.tar.gz
+
+上传到服务器 /opt  目录下
+tarxvf sersync2.5.4_64bit_binary_stable_final.tar.gz
+mvGNU-Linux-x86sersync
+
+
+2、配置sersync
+ [root@xuegod63 sersync]# cp confxml.xml confxml.xml.bak
+更改优化sersync配置文件：
+修改24--28行
+<sersync>
+        <localpath watch="/var/www/html">    #本地同步目录
+            <remote ip="192.168.0.64" name="wwwroot"/>   #rsync模块名称
+
+修改31--34行，认证部分【rsync密码认证】
+<rsync>
+            <commonParams params="-artuz"/>
+            <auth start="true" users="rsyncuser" passwordfile="/etc/rsync.passwd"/>
+            <userDefinedPort start="false" port="874"/><!-- port=874 -->
+            <timeout start="false" time="100"/><!-- timeout=100 -->
+            <ssh start="false"/>
+开启sersync守护进程同步数据
+/root/sersync/sersync2-d-r-o /opt/sersync/confxml.xml
+
+
+
+
+测试
+在63 /var/www/html/ 目录 增删改目录文件,
+看64 /web-back 目录的变化
+[root@xuegod64 web-back]# watch ls -l
+设置sersync监控开机自动执行
+vi /etc/rc.d/rc.local#编辑，在最后添加一行
+/usr/local/sersync/sersync2 -d -r -o /usr/local/sersync/confxml.xml＃设置开机自动运行脚本
+
+添加脚本监控sersync是否正常运行
+
+vi /opt/check_sersync.sh#编辑，添加以下代码
+#!/bin/sh
+sersync="/opt /sersync/sersync2"
+confxml="/opt /sersync/confxml.xml"
+status=$(ps aux |grep 'sersync2'|grep -v 'grep'|wc -l)
+if [ $status -eq 0 ];
+then
+$sersync -d -r -o $confxml &
+else
+exit 0;
+fi
+
+chmod +x /opt /check_sersync.sh #添加脚本执行权限
+
+把这个脚本加到任务计划,定期执行检测
+
+补充： 多实例情况
+1、配置多个confxml.xml文件（比如：www、bbs、blog....等等）
+2、根据不同的需求同步对应的实例文件
+/usr/local/sersync/sersync2-d-o/usr/local/sersync/www_confxml.xml
+/usr/local/sersync/sersync2-d-o/usr/local/sersync/bbs_confxml.xml
+
