@@ -1,0 +1,143 @@
+
+安装包下载
+http://www.oracle.com/technetwork/database/enterprise-edition/downloads/112010-win64soft-094461.html
+linux.x64_11gR2_database_1of2.zip
+linux.x64_11gR2_database_2of2.zip
+
+配置前需要ISO光盘挂载
+配置yum本地源
+[root@web home]# vim /etc/yum.repos.d/abc.repo 
+[abc]
+name=test
+baseurl=file:///mnt
+enbaled=1
+gpgcheck=0
+
+
+
+
+3.4.1 oracle软件安装
+ 在开始安装前先要检查下相应的依赖包，这里要注意的是如果是在X64的系统上安装记得需要安装i686即X64系统上的X86的包,这点很重要,如果漏了Oracle是无法正常的安装的，这里pdksh没有安装没有关系，在这里已经安装了ksh就可以了yum install -y binutils
+
+
+
+rpm -q --qf '%{NAME}-%{VERSION}-%{RELEASE} (%{ARCH})\n' binutils \
+compat-libcap1 \
+compat-libstdc++-33 \
+gcc \
+gcc-c++ \
+glibc \
+glibc-devel \
+ksh \
+libgcc \
+libstdc++ \
+libstdc++-devel \
+libaio \
+libaio-devel \
+make \
+sysstat
+
+yum -y install compat-libcap1 compat-libstdc++-33 ksh libaio-devel
+
+2、设置主机名、修改/etc/hosts
+[root@xuegod63 ~]# cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.1.63 xuegod63
+[root@xuegod63 ~]# hostname
+xuegod63
+
+
+
+
+
+
+
+
+
+
+
+[root@oracle ~]# yum -y install binutils compat-libstdc++-33 elfutils-libelf elfutils-libelf-devel glibc glibc-common glibc-devel gcc gcc-c++ libaio-devel libaio libgcc libstdc++ libstdc++-devel make sysstat unixODBC unixODBC-devel pdksh ksh libaio.i686 glibc.i686 compat-libstdc++-33.i686 libaio-devel.i686 libgcc.i686 libstdc++.i686 unixODBC.i686 unixODBC-devel.i686
+
+
+创建用户和oracle环境
+
+groupadd oinstall                //创建安装组
+groupadd dba                         //创建管理组
+mkdir -p /home/app
+useradd -g oinstall -G dba -d/home/app/oracle oracle      //创建运行用户
+passwd oracle          //设置oracle用户的密码
+
+
+
+[root@oracle home]# groupadd oinstall    //创建安装组
+
+[root@oracle home]# groupadd dba    //创建管理组
+[root@oracle home]# mkdir -p /home/app //创建安装目
+[root@oracle home]# useradd -g oinstall -G dba -d/home/app/oracle oracle  //创建运行用户
+[root@oracle home]# passwd oracle  //设置oracle用户的密码
+更改用户 oracle 的密码 。
+新的 密码：
+无效的密码： 它基于字典单词
+无效的密码： 过于简单
+重新输入新的 密码：
+passwd： 所有的身份验证令牌已经成功更新。
+修改目录权限：
+使其属主与属组为oracle:oinstall
+[root@oracle home]# chown -R oracle:oinstall /home/app
+[root@oracle home]# chmod 755 -R /home/app
+
+
+
+3.4.3
+在Root用户下执行以下步骤：
+修改用户的SHELL的限制(添加下列参数) //用来做进程数和文件数的限制，防止无用的SQL语句占用，导致正常SQL语句请求无法响应//
+[root@oracle home]# vi /etc/security/limits.conf
+oracle soft nproc 2047
+oracle hard nproc 16384
+oracle soft nofile 1024
+oracle hard nofile 65536
+
+[root@oracle home]# vi /etc/pam.d/login
+session  required      pam_limits.so
+
+
+修改linux内核
+[root@oracle home]# vi /etc/sysctl.conf       //包含端口的范围，内存调度，打开文件数//
+fs.file-max = 6815744
+fs.aio-max-nr = 1048576
+kernel.shmall = 2097152
+kernel.shmmax = 536870912
+kernel.shmmni = 4096
+kernel.sem = 250 32000 100 128
+net.ipv4.ip_local_port_range = 9000 65500
+net.core.rmem_default = 262144
+net.core.rmem_max = 4194304
+net.core.wmem_default = 262144
+net.core.wmem_max = 1048576
+注：sysctl.conf文件里有下面两个参数，记得注释掉
+#kernel.shmmax
+#kernel.shmall
+
+
+sysctl -p #生效
+
+
+
+
+切换到oracle用户下：
+配置oracle用户的环境变量:
+vi ~oracle/.bash_profile
+TMPDIR=$TMP;export TMPDIR
+ORACLE_BASE=/home/app/oracle;export ORACLE_BASE
+ORACLE_HOME=$ORACLE_BASE/product/11.2.0/dbhome_1;export ORACLE_HOME
+ORACLE_SID=orcl;export ORACLE_SID
+LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib;export LD_LIBRARY_PATH
+PATH=$ORACLE_HOME/bin:$PATH; export PATH
+NLS_LANG=american_america.ZHS16GBK
+当上述系统要求操作全部完成后，注销系统，在图形界面以Oracle用户登陆。首先将下载的Oracle安装包复制到linux中。
+
+
+
+unzip /app/oracle/linux_11gR2_database_1of2.zip
+unzip /app/oracle/linux_11gR2_database_2of2.zip
