@@ -1,60 +1,39 @@
 
+
+°²×°½Ì³Ì
 https://jingyan.baidu.com/article/20b68a889ed643796dec624c.html
 
 
-»·¾³×¼±¸
-°²×°°ü:
-linux.x64_11gR2_database_1of2.zip
-linux.x64_11gR2_database_2of2.zip
-¡¡¡¡OracleÏÂÔØµØÖ·£ºhttp://www.oracle.com/technetwork/indexes/downloads/index.html#database¡¡¡¡
-ÎÒcentos°²×°µÄÊÇ64Î»µÄ£¬µ«ÊÇÎÒµçÄÔÊÇ32Î»µÄ£¬ËùÒÔ¹ßĞÔÊ¹È»¾¹È»ÏÂÁË32Î»µÄ°²×°°ü£¬Ö®ºó°Ñ°²×°Ç°µÄÄÇĞ©×¼±¸¹¤×÷¶¼×öÁË£¬ÔËĞĞOracleµÄ°²×°°ü£¬¾¹È»Ê§°ÜÁË£¬ÎÒ×î¿ªÊ¼µÄÊ±ºò¶¼²»ÖªµÀÊ²Ã´Ô­Òò£¬×îºó»ĞÈ»·¢¾õ°²×°°üÅª´íÁË£¬Ó¦¸ÃÏÂ64Î»µÄ¡£¾ÍÒòÎªÕâ¸öÕÛÌÚÁËºÃ¾Ã£¬ÅªµÃÎÒĞÄÀï¶¼ÓĞ»ğÁË£¬ÒòÎªÃ»ÓĞ¸øvirtualbox×ö±¸·İ£¬Ò²Ã»ÓĞ¸øËüÉèÖÃ¹²ÏíÎÄ¼ş¼Ğ£¬ËùÒÔ¾ÍÒ»±é±éµÄÖØ¸´ÏÂÔØ£¬°²×°Ç°µÄ×¼±¸²½Öè£¬¶øÇÒÎÒÓĞÇ¿ÆÈÖ¢£¬±ÈÈçËµyum°²×°Ã»³É¹¦»òÕßÔõÃ´Ñù£¬¶¼ÒªÖØÍ·À´¹ı£¬ËùÒÔ×öÁËÌØ±ğ¶à±é£¬¾¹È»¶¼×öÁËÎŞÓÃ¹¦£¬ÌØÉú×Ô¼ºµÄÆø¡£ËùÒÔÒ»¶¨Òª¶à±¸·İ£¬ÏÂÖ®Ç°¿´×ĞÏ¸ÁË¡£
-¸øÖ÷»úÉèÖÃÃû³Æ£ºhostnamectl set-hostname master(masterÎªÖ÷»úÃû)
-ĞŞ¸Ä/etc/hosts×ö±¾»úIPµØÖ·Ó³Éä
-°²×°OracleÇ°µÄ×¼±¸
+ÏÂÔØµØÖ·
+qqÓÊÏäÕËºÅ
+https://www.oracle.com/technetwork/cn/database/enterprise-edition/downloads/112010-linx8664soft-098700-zhs.html
 
-1.´´½¨ÔËĞĞoracleÊı¾İ¿âµÄÏµÍ³ÓÃ»§ºÍÓÃ»§×é
-su root¡¡¡¡#ÇĞ»»µ½root
-Password:
-[root@localhost]# groupadd oinstall¡¡¡¡#´´½¨ÓÃ»§×éoinstall
-[root@localhost]# groupadd dba¡¡¡¡#´´½¨ÓÃ»§×édba
-[root@localhost]# useradd -g oinstall -g dba -m oracle¡¡¡¡#´´½¨oracleÓÃ»§£¬²¢¼ÓÈëµ½oinstallºÍdbaÓÃ»§×é
-[root@localhost]# passwd oracle¡¡¡¡#ÉèÖÃÓÃ»§oracleµÄµÇÂ½ÃÜÂë£¬²»ÉèÖÃÃÜÂë£¬ÔÚCentOSµÄÍ¼ĞÎµÇÂ½½çÃæÃ»·¨µÇÂ½
-Changing password for user oracle.
-New password: ¡¡¡¡# ÃÜÂë
-BAD PASSWORD: The password is shorter than 8 characters
-Retype new password: ¡¡¡¡# È·ÈÏÃÜÂë
-passwd: all authentication tokens updated successfully.
-[root@localhost]# id oracle # ²é¿´ĞÂ½¨µÄoracleÓÃ»§
-uid=1001(oracle) gid=1002(dba) groups=1002(dba)
+https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_1of2.zip?AuthParam=1543451837_062bf11620f929884b2e1b893f32f6e7
 
-2.´´½¨oracleÊı¾İ¿â°²×°Ä¿Â¼
-[root@localhost]# cd /.        #½øÈë¸ùÄ¿Â¼
-[root@localhost]# mkdir -p /data/oracle¡¡¡¡#oracleÊı¾İ¿â°²×°Ä¿Â¼
-[root@localhost]# mkdir -p /data/oraInventory¡¡¡¡#oracleÊı¾İ¿âÅäÖÃÎÄ¼şÄ¿Â¼
-[root@localhost]# mkdir -p /data/database¡¡¡¡#oracleÊı¾İ¿âÈí¼ş°ü½âÑ¹Ä¿Â¼
-[root@localhost]# cd /data
-[root@localhost data]# ls¡¡¡¡#´´½¨Íê±Ï¼ì²éÒ»ÏÂ£¨Ç¿ÆÈÖ¢£©
-database oracle oraInventory
-[root@localhost data]# chown -R oracle:oinstall /data/oracle¡¡¡¡#ÉèÖÃÄ¿Â¼ËùÓĞÕßÎªoinstallÓÃ»§×éµÄoracleÓÃ»§
-[root@localhost data]# chown -R oracle:oinstall /data/oraInventory
-[root@localhost data]# chown -R oracle:oinstall /data/database
-[root@localhost data]#
+https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1543452074_2a7fe6a8ffb48e324ea659455d344c05
 
-3.ĞŞ¸ÄOSÏµÍ³±êÊ¶£¨oracleÄ¬ÈÏ²»Ö§³ÖCentOSÏµÍ³°²×°£¬µ«ÊÇcentosÆäÊµ¾ÍÊÇredhat£©
 
-[root@localhost data]# cat /proc/version
-Linux version 3.10.0-514.26.2.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC) ) #1 SMP Tue Jul 4 15:04:05 UTC 2017
-[root@localhost data]# cat /etc/redhat-release
-4 CentOS Linux release 7.3.1611 (Core)
-[root@localhost data]# vi /etc/redhat-release
-[root@localhost data]# cat /etc/redhat-release
-redhat-7
+1.°²×°ÒÀÀµ°ü
+yum -y install binutils* compat-libcap1* compat-libstdc++* gcc* gcc-c++* glibc* glibc-devel* ksh* libaio* libaio-devel* libgcc* libstdc++* libstdc++-devel* libXi* libXtst* make* sysstat* elfutils* unixODBC*
 
-4.°²×°oracleÊı¾İ¿âËùĞèÒªµÄÈí¼ş°ü
-[root@localhost data]# yum -y install binutils* compat-libcap1* compat-libstdc++* gcc* gcc-c++* glibc* glibc-devel* ksh* libaio* libaio-devel* libgcc* libstdc++* libstdc++-devel* libXi* libXtst* make* sysstat* elfutils* unixODBC*
-ĞŞ¸ÄÄÚºË²ÎÊı
-[root@localhost data]# vim /etc/sysctl.conf
-¼ÓÈëÒÔÏÂÄÚÈİ£º
+2.1.1£©ĞŞ¸ÄÄÚºË²ÎÊı£º
+
+#vi /etc/sysctl.conf
+
+fs.file-max= 6815744
+fs.aio-max-nr=1048576
+net.ipv4.ip_local_port_range= 9000 65500
+net.core.rmem_default= 262144
+net.core.rmem_max= 4194304
+net.core.wmem_default= 262144
+net.core.wmem_max= 1048576
+kernel.sem= 250 32000 100 128
+kernel.shmall= 2097152£¨¿ÉÒÔ°´ÕÕÏµÍ³Ä¬ÈÏ£¬²»ĞŞ¸Ä£©
+kernel.shmmax= 536870912£¨¿ÉÒÔ°´ÕÕÏµÍ³Ä¬ÈÏ£¬²»ĞŞ¸Ä£©
+
+#sysctl -p //ÈÃÄÚºË²ÎÊıÉúĞ§
+»òÕß
+
 net.ipv4.icmp_echo_ignore_broadcasts = 1
 net.ipv4.conf.all.rp_filter = 1
 fs.file-max = 6815744 #ÉèÖÃ×î´ó´ò¿ªÎÄ¼şÊı
@@ -68,21 +47,75 @@ net.core.rmem_default = 262144
 net.core.rmem_max= 4194304
 net.core.wmem_default= 262144
 net.core.wmem_max= 1048576
-ÊÇÅäÖÃÉúĞ§£º
+
 #sysctl -p
-oracleÓÃ»§ÉèÖÃÏŞÖÆ£¬Ìá¸ßÈí¼şÔËĞĞĞÔÄÜ£¨Ğ±ÌåÎªÌí¼Ó²¿·Ö£©
-[root@localhost data]# vi /etc/security/limits.conf
-@student - maxlogins 4
- 
+
+2.2ĞŞ¸Ä½ø³ÌÊıºÍ×î´ó»á»°Êı
+
+#vi /etc/security/limits.conf
 oracle soft nproc 2047
 oracle hard nproc 16384
 oracle soft nofile 1024
 oracle hard nofile 65536
- 
-End of file
 
-ÅäÖÃÓÃ»§µÄ»·¾³±äÁ¿£¨Ğ±Ìå²¿·ÖÎªÌí¼Ó´úÂë£©
-[root@localhost data]# vi /home/oracle/.bash_profile
+2.3¹ØÁªÉèÖÃ
+
+#vi /etc/pam.d/login
+session required pam_limits.so
+
+(ĞŞ¸Ä/etc/profile
+
+#vi /etc/profile
+if [ $USER = "oracle" ]; then
+if [ $SHELL = "/bin/ksh" ]; then
+ulimit -p 16384
+ulimit -n 65536
+else
+ulimit -u 16384 -n 65536
+fi
+fi)
+
+
+
+
+4.1´´½¨°²×°ÓÃ»§ºÍ×é
+
+#groupadd oinstall //´´½¨oinstall×é
+
+#groupadd dba //´´½¨dba×é
+
+#useradd -g oinstall -G dba oracle //ĞÂ½¨ÓÃ»§oracle£¬Éè¶¨ÆäÖ÷×éÎªoinstall,¸±×éÎªdba
+
+#id oracle //¼ì²é½á¹û
+
+#passwd oracle //ÉèÖÃoracleÓÃ»§ÃÜÂë
+
+
+4.2´´½¨Êı¾İ¿â°²×°Ä¿Â¼
+
+[root@localhost]# cd /.        #½øÈë¸ùÄ¿Â¼
+[root@localhost]# mkdir -p /data/oracle¡¡¡¡#oracleÊı¾İ¿â°²×°Ä¿Â¼
+[root@localhost]# mkdir -p /data/oraInventory¡¡¡¡#oracleÊı¾İ¿âÅäÖÃÎÄ¼şÄ¿Â¼
+[root@localhost]# mkdir -p /data/database¡¡¡¡#oracleÊı¾İ¿âÈí¼ş°ü½âÑ¹Ä¿Â¼
+[root@localhost data]# chown -R oracle:oinstall /data/oracle¡¡¡¡#ÉèÖÃÄ¿Â¼ËùÓĞÕßÎªoinstallÓÃ»§×éµÄoracleÓÃ»§
+[root@localhost data]# chown -R oracle:oinstall /data/oraInventory
+[root@localhost data]# chown -R oracle:oinstall /data/database
+
+
+(Î´Öª²»ÖªµÀÊÇ·ñĞèÒª »¹ÊÇÅªÉÏ°Ñ
+[root@localhost data]# cat /proc/version
+Linux version 3.10.0-514.26.2.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC) ) #1 SMP Tue Jul 4 15:04:05 UTC 2017
+[root@localhost data]# cat /etc/redhat-release
+4 CentOS Linux release 7.3.1611 (Core)
+[root@localhost data]# vi /etc/redhat-release
+[root@localhost data]# cat /etc/redhat-release
+redhat-7
+)
+
+4.3ÉèÖÃÓÃ»§»·¾³±äÁ¿£¨ÊÇÔÚoracleÓÃ»§ÏÂ£©
+
+#vi /home/oracle/.bash_profile
+
 export ORACLE_BASE=/data/oracle #oracleÊı¾İ¿â°²×°Ä¿Â¼
 export ORACLE_HOME=$ORACLE_BASE/product/11.2.0/db_1 #oracleÊı¾İ¿âÂ·¾¶
 export ORACLE_SID=orcl #oracleÆô¶¯Êı¾İ¿âÊµÀıÃû
@@ -92,6 +125,12 @@ export PATH=$ORACLE_HOME/bin:/usr/sbin:$PATH #Ìí¼ÓÏµÍ³»·¾³±äÁ¿
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib #Ìí¼ÓÏµÍ³»·¾³±äÁ¿
 export LANG=C #·ÀÖ¹°²×°¹ı³Ì³öÏÖÂÒÂë
 export NLS_LANG=AMERICAN_AMERICA.ZHS16GBK #ÉèÖÃOracle¿Í»§¶Ë×Ö·û¼¯£¬±ØĞëÓëOracle°²×°Ê±ÉèÖÃµÄ×Ö·û¼¯±£³ÖÒ»ÖÂ
+ 
+#source /home/oracle/.bash_profile //¼ÓÔØÎÄ¼şÊ¹ÅäÖÃÉúĞ§
+
+#env|more //²é¿´ÅäÖÃµÄ»·¾³±äÁ¿ÊÇ·ñÕıÈ·
+
+
 
 ´´½¨Èí¼ş°²×°Ä¿Â¼
 #mkdir /data/oracle/oradata //´æ·ÅÊı¾İ¿âÄ¿Â¼
@@ -99,29 +138,46 @@ export NLS_LANG=AMERICAN_AMERICA.ZHS16GBK #ÉèÖÃOracle¿Í»§¶Ë×Ö·û¼¯£¬±ØĞëÓëOracle°
 #mkdir /data/oracle/flash_recovery_area
 #chown -R oracle:oinstall /data/
 #chmod -R 775 /data
+
+
+
 ½«oracleÊ¹ÓÃÕß¼ÓÈëµ½sudoÈº×éÖĞ
-#vim /etc/sudoers
-ÊäÈëÉÏÃæµÄÃüÁîºó£¬´ò¿ªsudoersÎÄ¼ş½øĞĞ±à¼­£¬ÕÒµ½
+#vi /etc/sudoers
+
 root		ALL=(ALL)		ALL 
 oracle	ALL=(ALL) 	ALL
+
 ¼ÇµÃÇ¿ÖÆ±£´æÍË³öÅ¶£¡£¡£¡
+
+
 ÕıÊ½°²×°
 Oracle 11g°²×°°ü£º½«°²×°°üÉÏ´«ÖÁ·şÎñÆ÷/opt/oracle/ ÏÂÃæ£¬ÕâÁ½¸ö°üÊôÓÚoracleÓÃ»§
 linux.x64_11gR2_database_1of2.zip¡¢linux.x64_11gR2_database_2of2.zip
 °²×°°ü½âÑ¹ÃüÁî(Ê¹ÓÃoracleÓÃ»§½âÑ¹ )
-$unzip linux.x64_11gR2_database_1of2.zip -d /data
-$unzip linux.x64_11gR2_database_2of2.zip -d /data
+
+mkdir /opt/oracle/
+mv linux.x64_11gR2_database_1of2.zip /opt/oracle/linux.x64_11gR2_database_1of2.zip
+mv linux.x64_11gR2_database_2of2.zip /opt/oracle/linux.x64_11gR2_database_2of2.zip
+chown -R oracle:oinstall /opt/oracle/
+su oracle
+unzip linux.x64_11gR2_database_1of2.zip -d /data
+unzip linux.x64_11gR2_database_2of2.zip -d /data
 ½âÑ¹Íê³Éºó/dataÏÂ»áÉú³ÉdatabaseÄ¿Â¼
+chown -R oracle:oinstall /data/
+
+
 ±à¼­oracleÊı¾İ¿â°²×°Ó¦´ğÎÄ¼ş
 ±à¼­/data/database/response£¨½âÑ¹ºóµÄÎÄ¼şÖĞ£©ÏÂÓĞÓĞdb_install.rsp¡¢dbca.rspºÍnetca.rspÈı¸öÓ¦´ğÎÄ¼ş£¬·Ö±ğÊı¾İ¿â°²×°ÎÄ¼ş¡¢½¨Á¢Êı¾İ¿âÊµÀıºÍ¼àÌıÅäÖÃ°²×°ÎÄ¼ş
-#vim /data/database/response/db_install.rsp
-ĞŞ¸ÄÒÔÏÂÄÚÈİ
+
+su oracle
+#vi /data/database/response/db_install.rsp
+
 oracle.install.option=INSTALL_DB_SWONLY   //29 ĞĞ °²×°ÀàĞÍ
 ORACLE_HOSTNAME=chances //37 ĞĞ Ö÷»úÃû³Æ
 UNIX_GROUP_NAME=oinstall //42 ĞĞ °²×°×é
-INVENTORY_LOCATION= /data/oraInventory //47 ĞĞ INVENTORYÄ¿Â¼
+INVENTORY_LOCATION=/data/oraInventory //47 ĞĞ INVENTORYÄ¿Â¼
 SELECTED_LANGUAGES=zh_CN //78 ĞĞ Ñ¡ÔñÓïÑÔ
-ORACLE_HOME=/data/oracle/product/11.2.0/db_1 //83 ĞĞ oracle_home
+ORACLE_HOME=/home/oracle //83 ĞĞ oracle_home
 ORACLE_BASE=/data/oracle //88 ĞĞ oracle_base
 oracle.install.db.InstallEdition=EE //99 ĞĞ oracle°æ±¾
 oracle.install.db.DBA_GROUP=dba //142ĞĞdbaÓÃ»§×é
@@ -132,13 +188,18 @@ oracle.install.db.config.starterdb.SID=orcl //170ĞĞSID
 oracle.install.db.config.starterdb.memoryLimit=800  //192ĞĞ ×Ô¶¯¹ÜÀíÄÚ´æµÄ×îĞ¡ÄÚ´æ(M)
 oracle.install.db.config.starterdb.password.ALL=oracle //233ĞĞ Éè¶¨ËùÓĞÊı¾İ¿âÓÃ»§Ê¹ÓÃÍ¬Ò»¸öÃÜÂë
 DECLINE_SECURITY_UPDATES=true //385ĞĞ ÉèÖÃ°²È«¸üĞÂ
+
+
+
 °²×°
 Ê¹ÓÃoracleÓÃ»§°²×°
 #su oracle
-/data/oracle/product/11.2.0/db_1
+mkdir /data/oracle/product/11.2.0/db_1 -p
 ½øÈë¸Õ²Å½âÑ¹µÄdatabaseÄ¿Â¼
-$cd /opt/oracle/database/
-$./runInstaller -silent -responseFile /data/database /response/db_install.rsp ¨CignorePrereq
+/data/database/response/db_install.rsp
+$cd /data/database/
+$./runInstaller -silent -responseFile /data/database/response/db_install.rsp ¨CignorePrereq
+
 
 
 °²×°ºó²Ù×÷
@@ -157,6 +218,8 @@ LISTENER_START=""LISTENER"" #¼àÌıÆ÷Æô¶¯µÄÃû³Æ
 ¼ì²éÍê±Ïºó£¬Ö´ĞĞÃüÁî£º
 $netca /silent /responseFile /data/database/response/netca.rsp
 Ö´ĞĞºó³É¹¦ÈçÏÂËùÊ¾£º
+
+
 
 Ìí¼ÓÊı¾İ¿âÊµÀı
 ĞŞ¸Ä/data/database/response/dbca.rsp£¨¾ÍÊÇ½âÑ¹°²×°ÎÄ¼şÄ¿Â¼ÏÂµÄ£©
