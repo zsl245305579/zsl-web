@@ -590,13 +590,19 @@ $netca /silent /responseFile /data/database/response/netca.rsp
 出现下图情况时，则需要配置DISPLAY变量，配完之后重新netca：
 
 [root@localhost ~]# export DISPLAY=:0.0
+yum whatprovides "*/xhost"
+yum install xorg-x11-server-utils-7.7-20.el7.x86_64 -y
+
 [root@localhost ~]# xhost +
 
-cd /u01/app/oracle/product/11.2.0/bin/netca
+ll /u01/app/oracle/product/11.2.0/bin/netca
 
-[oracle@woitumi-197 ~]$ export DISPLAY=localhost:0.0
+./netca &
+[oracle@woitumi-197 ~]$ export DISPLAY=45.115.243.24:0.0
 
-[oracle@woitumi-197 ~]$ netca -silent -responseFile /tmp/database/response/netca.rsp
+
+[oracle@woitumi-197 ~]$ netcanetca -silent -responseFile /tmp/database/response/netca.rsp
+
 
 
 成功运行后，会在/u01/app/oracle/product/11.2.0/network/admin/ 中生成listener.ora和sqlnet.ora两个文件。
@@ -604,8 +610,6 @@ cd /u01/app/oracle/product/11.2.0/bin/netca
 查看监听端口：
 
 [root@woitumi-197 admin]# netstat -tnulp | grep 1521
-
-
 
 
 
@@ -619,3 +623,11 @@ $lsnrctlstatus
 执行完后,监听就已经启动了,默认端口是1521,默认是动态监听,只要实例启动了就会监听到.
 
 
+
+[oracle@nexus ~]$ export DISPLAY=45.115.243.24:0    //192.168.20.100 是win7的地址，不是服务器的IP地址，切记
+
+[oracle@nexus ~]$ xhost +
+[oracle@nexus ~]$ netca
+
+
+nmap -sS -O 104.149.52.130
