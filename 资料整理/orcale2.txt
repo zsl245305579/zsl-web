@@ -4,17 +4,27 @@
 https://jingyan.baidu.com/article/20b68a889ed643796dec624c.html
 
 
+centos7
+
+https://jingyan.baidu.com/article/90895e0f29c92164ec6b0bd1.html
+
+
 ÏÂÔØµØÖ·
 qqÓÊÏäÕËºÅ
 https://www.oracle.com/technetwork/cn/database/enterprise-edition/downloads/112010-linx8664soft-098700-zhs.html
 
-https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_1of2.zip?AuthParam=1543451837_062bf11620f929884b2e1b893f32f6e7
+wget https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_1of2.zip?AuthParam=1543451837_062bf11620f929884b2e1b893f32f6e7
 
-https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1543452074_2a7fe6a8ffb48e324ea659455d344c05
+wget https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1543452074_2a7fe6a8ffb48e324ea659455d344c05
+
+wget https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1543545078_fc7f92a66edf07e1e9ef45c811586511
 
 
 1.°²×°ÒÀÀµ°ü
 yum -y install binutils* compat-libcap1* compat-libstdc++* gcc* gcc-c++* glibc* glibc-devel* ksh* libaio* libaio-devel* libgcc* libstdc++* libstdc++-devel* libXi* libXtst* make* sysstat* elfutils* unixODBC*
+
+(baidu)
+yum -y install gcc make binutils gcc-c++ compat-libstdc++-33 elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf-devel ksh libaio libaio-devel numactl-devel sysstat unixODBC unixODBC-devel pcre-devel
 
 2.1.1£©ĞŞ¸ÄÄÚºË²ÎÊı£º
 
@@ -91,15 +101,23 @@ fi)
 #passwd oracle //ÉèÖÃoracleÓÃ»§ÃÜÂë
 
 
-4.2´´½¨Êı¾İ¿â°²×°Ä¿Â¼
 
+£¨´´½¨Êı¾İ¿â°²×°Ä¿Â¼
 [root@localhost]# cd /.        #½øÈë¸ùÄ¿Â¼
 [root@localhost]# mkdir -p /data/oracle¡¡¡¡#oracleÊı¾İ¿â°²×°Ä¿Â¼
 [root@localhost]# mkdir -p /data/oraInventory¡¡¡¡#oracleÊı¾İ¿âÅäÖÃÎÄ¼şÄ¿Â¼
 [root@localhost]# mkdir -p /data/database¡¡¡¡#oracleÊı¾İ¿âÈí¼ş°ü½âÑ¹Ä¿Â¼
 [root@localhost data]# chown -R oracle:oinstall /data/oracle¡¡¡¡#ÉèÖÃÄ¿Â¼ËùÓĞÕßÎªoinstallÓÃ»§×éµÄoracleÓÃ»§
 [root@localhost data]# chown -R oracle:oinstall /data/oraInventory
-[root@localhost data]# chown -R oracle:oinstall /data/database
+[root@localhost data]# chown -R oracle:oinstall /data/database £©
+
+´´½¨Èí¼ş°²×°Ä¿Â¼
+#mkdir /data/oracle/oradata //´æ·ÅÊı¾İ¿âÄ¿Â¼
+#mkdir /data/oracle/inventory
+#mkdir /data/oracle/flash_recovery_area
+mkdir /data/oracle/product/11.2.0/db_1 -p
+#chown -R oracle:oinstall /data/
+#chmod -R 775 /data
 
 
 (Î´Öª²»ÖªµÀÊÇ·ñĞèÒª »¹ÊÇÅªÉÏ°Ñ
@@ -129,16 +147,6 @@ export NLS_LANG=AMERICAN_AMERICA.ZHS16GBK #ÉèÖÃOracle¿Í»§¶Ë×Ö·û¼¯£¬±ØĞëÓëOracle°
 #source /home/oracle/.bash_profile //¼ÓÔØÎÄ¼şÊ¹ÅäÖÃÉúĞ§
 
 #env|more //²é¿´ÅäÖÃµÄ»·¾³±äÁ¿ÊÇ·ñÕıÈ·
-
-
-
-´´½¨Èí¼ş°²×°Ä¿Â¼
-#mkdir /data/oracle/oradata //´æ·ÅÊı¾İ¿âÄ¿Â¼
-#mkdir /data/oracle/inventory
-#mkdir /data/oracle/flash_recovery_area
-#chown -R oracle:oinstall /data/
-#chmod -R 775 /data
-
 
 
 ½«oracleÊ¹ÓÃÕß¼ÓÈëµ½sudoÈº×éÖĞ
@@ -175,9 +183,9 @@ su oracle
 oracle.install.option=INSTALL_DB_SWONLY   //29 ĞĞ °²×°ÀàĞÍ
 ORACLE_HOSTNAME=chances //37 ĞĞ Ö÷»úÃû³Æ
 UNIX_GROUP_NAME=oinstall //42 ĞĞ °²×°×é
-INVENTORY_LOCATION=/data/oraInventory //47 ĞĞ INVENTORYÄ¿Â¼
+INVENTORY_LOCATION=/data/oracle/inventory //47 ĞĞ INVENTORYÄ¿Â¼
 SELECTED_LANGUAGES=zh_CN //78 ĞĞ Ñ¡ÔñÓïÑÔ
-ORACLE_HOME=/home/oracle //83 ĞĞ oracle_home
+ORACLE_HOME=/data/oracle/product/11.2.0/db_1 //83 ĞĞ oracle_home
 ORACLE_BASE=/data/oracle //88 ĞĞ oracle_base
 oracle.install.db.InstallEdition=EE //99 ĞĞ oracle°æ±¾
 oracle.install.db.DBA_GROUP=dba //142ĞĞdbaÓÃ»§×é
@@ -189,6 +197,16 @@ oracle.install.db.config.starterdb.memoryLimit=800  //192ĞĞ ×Ô¶¯¹ÜÀíÄÚ´æµÄ×îĞ¡ÄÚ
 oracle.install.db.config.starterdb.password.ALL=oracle //233ĞĞ Éè¶¨ËùÓĞÊı¾İ¿âÓÃ»§Ê¹ÓÃÍ¬Ò»¸öÃÜÂë
 DECLINE_SECURITY_UPDATES=true //385ĞĞ ÉèÖÃ°²È«¸üĞÂ
 
+
+vi /etc/hosts
+127.0.0.1 zsl.cn
+
+
+#mkdir /data/oracle/oradata //´æ·ÅÊı¾İ¿âÄ¿Â¼
+#mkdir /data/oracle/inventory
+#mkdir /data/oracle/flash_recovery_area
+mkdir /data/oracle/product/11.2.0/db_1 -p
+#chown -R oracle:oinstall /data/
 
 
 °²×°
@@ -209,6 +227,7 @@ $./runInstaller -silent -responseFile /data/database/response/db_install.rsp ¨Ci
 #/data/oracle/product/11.2.0/db_1/root.sh
 ÅäÖÃ¼àÌı
 ±à¼­oracle°²×°Ä¿Â¼ÏÂµÄnetca.rspÓ¦´ğÎÄ¼ş£¬µØÖ·Îª£º
+
 /data /database/response/netca.rsp£¬Ö÷Òª²é¿´ÒÔÏÂ²ÎÊıÅäÖÃ£º
 INSTALL_TYPE=""custom"" #°²×°µÄÀàĞÍ
 LISTENER_NUMBER=1 #¼àÌıÆ÷ÊıÁ¿
@@ -373,3 +392,230 @@ SID_LIST_addb =
       (SID_NAME = addb)
     )
   )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+yum install wget unzip vim -y
+
+
+
+
+ÒÀÀµ°²×°
+(baidu)
+yum -y install gcc make binutils gcc-c++ compat-libstdc++-33 elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf-devel ksh libaio libaio-devel numactl-devel sysstat unixODBC unixODBC-devel pcre-devel
+
+
+Ìí¼Óoinstall ¡¢dba ×é
+
+#groupadd oinstall //´´½¨oinstall×é
+
+#groupadd dba //´´½¨dba×é
+
+#useradd -g oinstall -G dba oracle //ĞÂ½¨ÓÃ»§oracle£¬Éè¶¨ÆäÖ÷×éÎªoinstall,¸±×éÎªdba
+
+#id oracle //¼ì²é½á¹û
+
+#passwd oracle //ÉèÖÃoracleÓÃ»§ÃÜÂë
+
+
+
+ĞŞ¸ÄÄÚºË²ÎÊı£º±à¼­ 
+vi /etc/sysctl.conf
+
+Ìí¼ÓÒÔÏÂÉèÖÃ£º
+
+io-max-nr = 1048576
+fs.file-max = 6815744
+kernel.shmall = 2097152
+kernel.shmmax = 1073741824
+kernel.shmmni = 4096
+kernel.sem = 250 32000 100 128
+net.ipv4.ip_local_port_range = 9000 65500
+net.core.rmem_default = 262144
+net.core.rmem_max = 4194304
+net.core.wmem_default = 262144
+net.core.wmem_max = 1048576
+
+ÈÃ²ÎÊıÉúĞ§£ºsysctl -p
+
+ĞŞ¸ÄÓÃ»§µÄÏŞÖÆÎÄ¼ş£¬±à¼­ 
+vim /etc/security/limits.conf
+
+Ìí¼ÓÒÔÏÂÅäÖÃ£º
+
+oracle           soft    nproc           2047
+oracle           hard    nproc           16384
+oracle           soft    nofile          1024
+oracle           hard    nofile          65536
+oracle           soft    stack           10240
+
+
+ĞŞ¸Ä
+vi /etc/pam.d/login
+
+session  required   /lib64/security/pam_limits.so
+session  required   pam_limits.so
+
+ĞŞ¸Ä/etc/profileÎÄ¼ş£º
+
+[root@woitumi-197 ~]# vim /etc/profile
+
+if [ $USER = "oracle" ]; then
+  if [ $SHELL = "/bin/ksh" ]; then
+   ulimit -p 16384
+   ulimit -n 65536
+  else
+   ulimit -u 16384 -n 65536
+  fi
+fi
+
+´´½¨°²×°Ä¿Â¼¡¢ĞŞ¸ÄÎÄ¼şÈ¨ÏŞ
+
+
+mkdir -p /u01/app/oracle/product/11.2.0
+
+mkdir /u01/app/oracle/oradata
+
+mkdir /u01/app/oracle/inventory
+
+mkdir /u01/app/oracle/fast_recovery_area
+
+[root@woitumi-197 ~]# chown -R oracle:oinstall /u01/app/oracle
+
+[root@woitumi-197 ~]# chmod -R 775 /u01/app/oracle
+
+ÉÏ´«oracleÈí¼ş°üµ½ /tmpÄ¿Â¼ÏÂ£¨xftpÉÏ´«£©
+
+¹ÙÍøÓĞÊ±ºò»áµÇÂ¼µ¯´í µ«ÊÇ¿ÉÒÔÕı³£ÏÂÔØ
+
+½âÑ¹oracleÈí¼ş°ü£º
+cd /tmp
+[root@woitumi-197 tmp]# unzip linux.x64_11gR2_database_1of2.zip && unzip linux.x64_11gR2_database_2of2.zip
+
+
+
+ÇĞ»»µ½oracleÓÃ»§£¬ÉèÖÃoracleÓÃ»§»·¾³±äÁ¿
+
+[root@woitumi-197 database]# su oracle
+cd /home/oracle/
+
+[oracle@woitumi-197 ~]$ vim .bash_profile
+
+Ìí¼Ó£º
+
+ORACLE_BASE=/u01/app/oracle
+ORACLE_HOME=$ORACLE_BASE/product/11.2.0
+ORACLE_SID=orcl
+PATH=$PATH:$ORACLE_HOME/bin
+export ORACLE_BASE ORACLE_HOME ORACLE_SID PATH
+
+source /home/oracle/.bash_profile
+
+
+
+
+±à¼­¾²Ä¬°²×°ÏìÓ¦ÎÄ¼ş
+
+£¨1£©ÇĞ»»µ½root ÓÃ»§½øÈëoracle°²×°°ü½âÑ¹ºóµÄÄ¿Â¼ /tmp/database/response/ÏÂ±¸·İdb_install.rspÎÄ¼ş¡£
+
+
+£¨2£©±à¼­ /tmp/database/response/db_install.rspÎÄ¼ş
+
+cd /tmp/database/response/
+cp /tmp/database/response/db_install.rsp  /tmp/database/response/db_install.rsp.bak
+[root@woitumi-197 response]# vim db_install.rsp
+
+ĞŞ¸ÄÒÔÏÂ²ÎÊı£º
+
+oracle.install.option=INSTALL_DB_SWONLY
+ORACLE_HOSTNAME=zsl.cn
+UNIX_GROUP_NAME=oinstall
+INVENTORY_LOCATION=/u01/app/oracle/inventory
+SELECTED_LANGUAGES=en,zh_CN
+ORACLE_HOME=/u01/app/oracle/product/11.2.0
+ORACLE_BASE=/u01/app/oracle
+oracle.install.db.InstallEdition=EE
+oracle.install.db.DBA_GROUP=dba
+oracle.install.db.OPER_GROUP=dba
+DECLINE_SECURITY_UPDATES=true
+
+
+
+[root@zsl database]# su oracle
+
+./runInstaller -silent -ignorePrereq -ignoreSysPrereqs -responseFile /tmp/database/response/db_install.rsp
+
+
+°²×°¹ı³ÌÈÕÖ¾²é¿´
+tail -F /u01/app/oracle/inventory/logs/installActions2018-11-29_10-14-15PM.log
+
+
+°´ÕÕÌáÊ¾ÇĞ»»rootÓÃ»§ÔËĞĞ½Å±¾
+
+
+[oracle@woitumi-197 database]$ su
+[root@woitumi-197 database]# sh /u01/app/oracle/inventory/orainstRoot.sh
+[root@woitumi-197 database]# sh /u01/app/oracle/product/11.2.0/root.sh
+
+
+
+vi /tmp/database/response/netca.rsp£¬Ö÷Òª²é¿´ÒÔÏÂ²ÎÊıÅäÖÃ£º
+INSTALL_TYPE=""custom"" #°²×°µÄÀàĞÍ
+LISTENER_NUMBER=1 #¼àÌıÆ÷ÊıÁ¿
+LISTENER_NAMES={"LISTENER"} #¼àÌıÆ÷µÄÃû³ÆÁĞ±í
+LISTENER_PROTOCOLS={"TCP;1521"} #¼àÌıÆ÷Ê¹ÓÃµÄÍ¨Ñ¶Ğ­ÒéÁĞ±í
+LISTENER_START=""LISTENER"" #¼àÌıÆ÷Æô¶¯µÄÃû³Æ
+¼ì²éÍê±Ïºó£¬Ö´ĞĞÃüÁî£º
+$netca /silent /responseFile /data/database/response/netca.rsp
+
+
+
+
+ÓÃoracleÓÃ»§µÇÂ¼ÅäÖÃ¼àÌı
+[oracle@woitumi-197 ~]$ netca -silent -responseFile /tmp/database/response/netca.rsp
+
+³öÏÖÏÂÍ¼Çé¿öÊ±£¬ÔòĞèÒªÅäÖÃDISPLAY±äÁ¿£¬ÅäÍêÖ®ºóÖØĞÂnetca£º
+
+[root@localhost ~]# export DISPLAY=:0.0
+[root@localhost ~]# xhost +
+
+cd /u01/app/oracle/product/11.2.0/bin/netca
+
+[oracle@woitumi-197 ~]$ export DISPLAY=localhost:0.0
+
+[oracle@woitumi-197 ~]$ netca -silent -responseFile /tmp/database/response/netca.rsp
+
+
+³É¹¦ÔËĞĞºó£¬»áÔÚ/u01/app/oracle/product/11.2.0/network/admin/ ÖĞÉú³Élistener.oraºÍsqlnet.oraÁ½¸öÎÄ¼ş¡£
+
+²é¿´¼àÌı¶Ë¿Ú£º
+
+[root@woitumi-197 admin]# netstat -tnulp | grep 1521
+
+
+
+
+
+
+$ORACLE_HOME/network/adminÄ¿Â¼ÏÂ:
+#su - oracle
+netca -silent -responseFile /tmp/database/response/netca.rsp
+
+$ll $ORACLE_HOME/network/admin/*.ora
+$lsnrctlstatus
+Ö´ĞĞÍêºó,¼àÌı¾ÍÒÑ¾­Æô¶¯ÁË,Ä¬ÈÏ¶Ë¿ÚÊÇ1521,Ä¬ÈÏÊÇ¶¯Ì¬¼àÌı,Ö»ÒªÊµÀıÆô¶¯ÁË¾Í»á¼àÌıµ½.
+
+
