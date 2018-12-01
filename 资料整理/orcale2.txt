@@ -1,4 +1,5 @@
-
+官网教程
+https://docs.oracle.com/cd/E11882_01/install.112/e24325/toc.htm#CEGEGDBA
 
 安装教程
 https://jingyan.baidu.com/article/20b68a889ed643796dec624c.html
@@ -60,75 +61,13 @@ net.core.wmem_max= 1048576
 
 #sysctl -p
 
-2.2修改进程数和最大会话数
-
-#vi /etc/security/limits.conf
-oracle soft nproc 2047
-oracle hard nproc 16384
-oracle soft nofile 1024
-oracle hard nofile 65536
-
-2.3关联设置
-
-#vi /etc/pam.d/login
-session required pam_limits.so
-
-(修改/etc/profile
-
-#vi /etc/profile
-if [ $USER = "oracle" ]; then
-if [ $SHELL = "/bin/ksh" ]; then
-ulimit -p 16384
-ulimit -n 65536
-else
-ulimit -u 16384 -n 65536
-fi
-fi)
 
 
 
 
-4.1创建安装用户和组
-
-#groupadd oinstall //创建oinstall组
-
-#groupadd dba //创建dba组
-
-#useradd -g oinstall -G dba oracle //新建用户oracle，设定其主组为oinstall,副组为dba
-
-#id oracle //检查结果
-
-#passwd oracle //设置oracle用户密码
 
 
 
-（创建数据库安装目录
-[root@localhost]# cd /.        #进入根目录
-[root@localhost]# mkdir -p /data/oracle　　#oracle数据库安装目录
-[root@localhost]# mkdir -p /data/oraInventory　　#oracle数据库配置文件目录
-[root@localhost]# mkdir -p /data/database　　#oracle数据库软件包解压目录
-[root@localhost data]# chown -R oracle:oinstall /data/oracle　　#设置目录所有者为oinstall用户组的oracle用户
-[root@localhost data]# chown -R oracle:oinstall /data/oraInventory
-[root@localhost data]# chown -R oracle:oinstall /data/database ）
-
-创建软件安装目录
-#mkdir /data/oracle/oradata //存放数据库目录
-#mkdir /data/oracle/inventory
-#mkdir /data/oracle/flash_recovery_area
-mkdir /data/oracle/product/11.2.0/db_1 -p
-#chown -R oracle:oinstall /data/
-#chmod -R 775 /data
-
-
-(未知不知道是否需要 还是弄上把
-[root@localhost data]# cat /proc/version
-Linux version 3.10.0-514.26.2.el7.x86_64 (builder@kbuilder.dev.centos.org) (gcc version 4.8.5 20150623 (Red Hat 4.8.5-11) (GCC) ) #1 SMP Tue Jul 4 15:04:05 UTC 2017
-[root@localhost data]# cat /etc/redhat-release
-4 CentOS Linux release 7.3.1611 (Core)
-[root@localhost data]# vi /etc/redhat-release
-[root@localhost data]# cat /etc/redhat-release
-redhat-7
-)
 
 4.3设置用户环境变量（是在oracle用户下）
 
@@ -157,45 +96,6 @@ oracle	ALL=(ALL) 	ALL
 
 记得强制保存退出哦！！！
 
-
-正式安装
-Oracle 11g安装包：将安装包上传至服务器/opt/oracle/ 下面，这两个包属于oracle用户
-linux.x64_11gR2_database_1of2.zip、linux.x64_11gR2_database_2of2.zip
-安装包解压命令(使用oracle用户解压 )
-
-mkdir /opt/oracle/
-mv linux.x64_11gR2_database_1of2.zip /opt/oracle/linux.x64_11gR2_database_1of2.zip
-mv linux.x64_11gR2_database_2of2.zip /opt/oracle/linux.x64_11gR2_database_2of2.zip
-chown -R oracle:oinstall /opt/oracle/
-su oracle
-unzip linux.x64_11gR2_database_1of2.zip -d /data
-unzip linux.x64_11gR2_database_2of2.zip -d /data
-解压完成后/data下会生成database目录
-chown -R oracle:oinstall /data/
-
-
-编辑oracle数据库安装应答文件
-编辑/data/database/response（解压后的文件中）下有有db_install.rsp、dbca.rsp和netca.rsp三个应答文件，分别数据库安装文件、建立数据库实例和监听配置安装文件
-
-su oracle
-#vi /data/database/response/db_install.rsp
-
-oracle.install.option=INSTALL_DB_SWONLY   //29 行 安装类型
-ORACLE_HOSTNAME=chances //37 行 主机名称
-UNIX_GROUP_NAME=oinstall //42 行 安装组
-INVENTORY_LOCATION=/data/oracle/inventory //47 行 INVENTORY目录
-SELECTED_LANGUAGES=zh_CN //78 行 选择语言
-ORACLE_HOME=/data/oracle/product/11.2.0/db_1 //83 行 oracle_home
-ORACLE_BASE=/data/oracle //88 行 oracle_base
-oracle.install.db.InstallEdition=EE //99 行 oracle版本
-oracle.install.db.DBA_GROUP=dba //142行dba用户组
-oracle.install.db.OPER_GROUP=oinstall //147行oper用户组
-oracle.install.db.config.starterdb.type=GENERAL_PURPOSE //160行 数据库类型
-oracle.install.db.config.starterdb.globalDBName=orcl //165行globalDBName
-oracle.install.db.config.starterdb.SID=orcl //170行SID
-oracle.install.db.config.starterdb.memoryLimit=800  //192行 自动管理内存的最小内存(M)
-oracle.install.db.config.starterdb.password.ALL=oracle //233行 设定所有数据库用户使用同一个密码
-DECLINE_SECURITY_UPDATES=true //385行 设置安全更新
 
 
 vi /etc/hosts
@@ -365,9 +265,9 @@ NATIONAL CHARACTER SET AL16UTF16
 sqlplus / as sysdba
 startup nomount;
 @$ORACLE_BASE/oradata/addb/createdb.sql
-@?/rdbms/admin/catalog.sql;
-@?/rdbms/admin/catproc.sql;
-@?/rdbms/admin/catexp.sql;
+@/rdbms/admin/catalog.sql;
+@/rdbms/admin/catproc.sql;
+@/rdbms/admin/catexp.sql;
 执行此过程的时候会比较久
 7、修改监听配置文件listener.ora
 
@@ -411,8 +311,6 @@ SID_LIST_addb =
 yum install wget unzip vim -y
 
 
-
-
 依赖安装
 (baidu)
 yum -y install gcc make binutils gcc-c++ compat-libstdc++-33 elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf-devel ksh libaio libaio-devel numactl-devel sysstat unixODBC unixODBC-devel pcre-devel
@@ -429,7 +327,6 @@ yum -y install gcc make binutils gcc-c++ compat-libstdc++-33 elfutils-libelf-dev
 #id oracle //检查结果
 
 #passwd oracle //设置oracle用户密码
-
 
 
 修改内核参数：编辑 
@@ -453,8 +350,6 @@ net.core.wmem_max = 1048576
 
 修改用户的限制文件，编辑 
 vim /etc/security/limits.conf
-
-添加以下配置：
 
 oracle           soft    nproc           2047
 oracle           hard    nproc           16384
@@ -499,12 +394,10 @@ mkdir /u01/app/oracle/fast_recovery_area
 
 上传oracle软件包到 /tmp目录下（xftp上传）
 
-官网有时候会登录弹错 但是可以正常下载
 
 解压oracle软件包：
 cd /tmp
 [root@woitumi-197 tmp]# unzip linux.x64_11gR2_database_1of2.zip && unzip linux.x64_11gR2_database_2of2.zip
-
 
 
 切换到oracle用户，设置oracle用户环境变量
@@ -515,7 +408,6 @@ cd /home/oracle/
 [oracle@woitumi-197 ~]$ vim .bash_profile
 
 添加：
-
 ORACLE_BASE=/u01/app/oracle
 ORACLE_HOME=$ORACLE_BASE/product/11.2.0
 ORACLE_SID=orcl
@@ -529,17 +421,11 @@ source /home/oracle/.bash_profile
 
 编辑静默安装响应文件
 
-（1）切换到root 用户进入oracle安装包解压后的目录 /tmp/database/response/下备份db_install.rsp文件。
-
-
-（2）编辑 /tmp/database/response/db_install.rsp文件
-
 cd /tmp/database/response/
 cp /tmp/database/response/db_install.rsp  /tmp/database/response/db_install.rsp.bak
 [root@woitumi-197 response]# vim db_install.rsp
 
 修改以下参数：
-
 oracle.install.option=INSTALL_DB_SWONLY
 ORACLE_HOSTNAME=zsl.cn
 UNIX_GROUP_NAME=oinstall
@@ -553,10 +439,15 @@ oracle.install.db.OPER_GROUP=dba
 DECLINE_SECURITY_UPDATES=true
 
 
-
+cd /tmp/database/
 [root@zsl database]# su oracle
 
 ./runInstaller -silent -ignorePrereq -ignoreSysPrereqs -responseFile /tmp/database/response/db_install.rsp
+
+
+提示：$ Exception in thread "main" java.lang.NoClassDefFoundError
+root 用户下执行
+unset DISPLAY
 
 
 安装过程日志查看
@@ -567,22 +458,16 @@ tail -F /u01/app/oracle/inventory/logs/installActions2018-11-29_10-14-15PM.log
 
 
 [oracle@woitumi-197 database]$ su
-[root@woitumi-197 database]# sh /u01/app/oracle/inventory/orainstRoot.sh
+
 [root@woitumi-197 database]# sh /u01/app/oracle/product/11.2.0/root.sh
 
 
-
-vi /tmp/database/response/netca.rsp，主要查看以下参数配置：
+vi /tmp/database/response/netca.rsp，主要查看以下参数配置：也可以不配置
 INSTALL_TYPE=""custom"" #安装的类型
 LISTENER_NUMBER=1 #监听器数量
 LISTENER_NAMES={"LISTENER"} #监听器的名称列表
 LISTENER_PROTOCOLS={"TCP;1521"} #监听器使用的通讯协议列表
 LISTENER_START=""LISTENER"" #监听器启动的名称
-检查完毕后，执行命令：
-$netca /silent /responseFile /data/database/response/netca.rsp
-
-
-
 
 用oracle用户登录配置监听
 [oracle@woitumi-197 ~]$ netca -silent -responseFile /tmp/database/response/netca.rsp
@@ -597,37 +482,74 @@ yum install xorg-x11-server-utils-7.7-20.el7.x86_64 -y
 
 ll /u01/app/oracle/product/11.2.0/bin/netca
 
-./netca &
-[oracle@woitumi-197 ~]$ export DISPLAY=45.115.243.24:0.0
 
-
-[oracle@woitumi-197 ~]$ netcanetca -silent -responseFile /tmp/database/response/netca.rsp
-
-
-
-成功运行后，会在/u01/app/oracle/product/11.2.0/network/admin/ 中生成listener.ora和sqlnet.ora两个文件。
-
-查看监听端口：
-
-[root@woitumi-197 admin]# netstat -tnulp | grep 1521
-
-
-
-
-$ORACLE_HOME/network/admin目录下:
 #su - oracle
-netca -silent -responseFile /tmp/database/response/netca.rsp
+
+[oracle@zsl database]$ export DISPLAY=local_host:0.0
+[oracle@zsl database]$ netca -silent -responseFile /tmp/database/response/netca.rsp
 
 $ll $ORACLE_HOME/network/admin/*.ora
-$lsnrctlstatus
+$lsnrctl status
+
+netstat -tnulp | grep 1521
 执行完后,监听就已经启动了,默认端口是1521,默认是动态监听,只要实例启动了就会监听到.
 
+重置安装文件
+rm -rf ./inventory/*
+
+rm -rf ./fast_recovery_area/*
+
+rm -rf ./product/11.2.0/*
 
 
-[oracle@nexus ~]$ export DISPLAY=45.115.243.24:0    //192.168.20.100 是win7的地址，不是服务器的IP地址，切记
-
-[oracle@nexus ~]$ xhost +
-[oracle@nexus ~]$ netca
 
 
-nmap -sS -O 104.149.52.130
+
+
+
+
+
+
+
+
+
+
+
+
+
+官网包
+
+binutils-2.23.52.0.1-12.el7.x86_64 compat-libcap1-1.10-3.el7.x86_64 compat-libstdc++-33-3.2.3-71.el7.i686
+compat-libstdc++-33-3.2.3-71.el7.x86_64
+gcc-4.8.2-3.el7.x86_64 
+gcc-c++-4.8.2-3.el7.x86_64 
+glibc-2.17-36.el7.i686 
+glibc-2.17-36.el7.x86_64 
+glibc-devel-2.17-36.el7.i686 
+glibc-devel-2.17-36.el7.x86_64 
+ksh
+libaio-0.3.109-9.el7.i686 
+libaio-0.3.109-9.el7.x86_64 
+libaio-devel-0.3.109-9.el7.i686 
+libaio-devel-0.3.109-9.el7.x86_64 
+libgcc-4.8.2-3.el7.i686 
+libgcc-4.8.2-3.el7.x86_64 
+libstdc++-4.8.2-3.el7.i686 
+libstdc++-4.8.2-3.el7.x86_64 
+libstdc++-devel-4.8.2-3.el7.i686 
+libstdc++-devel-4.8.2-3.el7.x86_64 
+libXi-1.7.2-1.el7.i686 libXi-1.7.2-1.el7.x86_64 libXtst-1.2.2-1.el7.i686 libXtst-1.2.2-1.el7.x86_64 make-3.82-19.el7.x86_64 sysstat-10.1.5-1.el7.x86_64
+
+
+
+unixODBC-2.3.1-6.el7.x86_64 or later
+
+unixODBC-2.3.1-6.el7.i686 or later
+
+unixODBC-devel-2.3.1-6.el7.x86_64 or later
+
+unixODBC-devel-2.3.1-6.el7.i686 or later
+
+
+
+
