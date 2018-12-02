@@ -1,7 +1,5 @@
 https://www.cnblogs.com/chinafine/articles/1755405.html
 
-https://www.cnblogs.com/qlqwjy/p/8405543.html
-
 select table_name from user_tables;
 
 select * from all_tables where owner='TEST'；
@@ -13,6 +11,9 @@ TEST为用户名，用户名必须是大写。
 查看当前登录的用户的表:
 
   select table_name from user_tables;
+
+
+
 
 步骤一：关闭数据库
 1.export ORACLE_SID=zsl2
@@ -151,47 +152,72 @@ ORA-01035: ORACLE 只允许具有 RESTRICTED SESSION 权限的用户使用
    如果数据库中有大量操作正在执行，这时执行shutdown abort后，重新启动数据库需要很长时间。
 
 
+
+https://www.cnblogs.com/qlqwjy/p/8405543.html
 登录
 
-2.1  以DBA用户登录数据库（如system,sys）
-SQL> conn system/oracle@orcl
+2.1  登录数据库（如system,sys）
 
-注：如果在本地服务器登录@orcl可以去掉
+export ORACLE_SID=ORCL
+sqlplus / as sysdba
+startup #开启
+connect / as sysdba
 
+SQL> show user #查看用户
+SQL> show parameter instance_name; #查看库信息
 
-2.2  用create user语法创建用户
-SQL> CREATE USER user_name IDENTIFIED BY user_passwordDefaultTablespace tbs_users;
-user_name为数据库用户的用户名
-user_password为数据库用户的密码
-tbs_users为用户使用的表空间，默认是users表空间。
+创建用户授权
+create user zsl2 identified by "zsl2";
+grant connect,resource,dba to zsl2;
+SQL> connect zsl3/zsl3@orcl #切换用户
+已连接。
+SQL> show user
+USER 为 "SBGL"
 
-SQL> CREATE USER cmsuser IDENTIFIED BY "password" DefaultTablespace users;
-
-
-2.3  赋表空间使用权限
-SQL> alter user user_name quota unlimited on user_tablespace quota unlimited on user_tablespace;
-
-2.4  给用户赋权限
-SQL> GRANT connect, resource TO cmsuser;
-Connect用户能登录数据库的权限
-Resource用户能创建一些数据库对像的权限，表、视图，存储过程，一般是授予开发人员的
- 
-2.5  删除用户
-SQL> DropUser cmsuser Cascade;
-使用cascade参数可以删除该用户的全部objects
 
 创建删除
 
-create user test identified by "table";
-
+create user zsl2 identified by "zsl2";
+grant connect,resource,dba to zsl2;
 create user cmsuser identified by "table";
 
 drop user test;
 drop user cmsuser;
 
 
+管理员用户登录oracle数据库
 
-五、sql*plus常用命令
+1、创建临时表空间
+
+select name from v$tempfile;查出当前数据库临时表空间，主要是使用里面的存放路径；
+/u01/app/oracle/oradata/orcl/temp01.dbf
+
+create temporary tablespace plncontrol_temp tempfile '/u01/app/oracle/oradata/orcl/plncontrol_temp.dbf' size 100m reuse autoextend on next 20m maxsize unlimited; 
+
+2、创建表空间
+
+select name from v$datafile;查询出当前数据库表空间，使用里面的路径
+
+SQL> select name from v$datafile;
+
+NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/orcl/system01.dbf
+/u01/app/oracle/oradata/orcl/sysaux01.dbf
+/u01/app/oracle/oradata/orcl/undotbs01.dbf
+/u01/app/oracle/oradata/orcl/users01.dbf
+
+
+create tablespace users02 datafile '/u01/app/oracle/oradata/orcl/users02.dbf'size 200M autoextend on next 50M force logging;
+
+3、创建用户并指定表空间
+create user zsl3 identified by zsl3 default tablespace users02;
+4、赋予用户权限
+grant connect,resource,dba to zsl3;
+
+
+
+sql*plus常用命令
 1)、连接命令
 1.conn[ect]
 用法：conn 用户名/密码@网络服务名 [as sysdba/sysoper]
