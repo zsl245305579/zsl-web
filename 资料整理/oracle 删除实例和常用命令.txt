@@ -1,3 +1,5 @@
+https://www.cnblogs.com/chinafine/articles/1755405.html
+
 步骤一：关闭数据库
 1.export ORACLE_SID=zsl2
 2.sqlplus / as sysdba
