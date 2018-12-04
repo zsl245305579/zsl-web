@@ -1,142 +1,3 @@
-官网教程
-https://docs.oracle.com/cd/E11882_01/install.112/e24325/toc.htm#CEGEGDBA
-
-安装教程
-https://jingyan.baidu.com/article/20b68a889ed643796dec624c.html
-
-
-centos7
-
-https://jingyan.baidu.com/article/90895e0f29c92164ec6b0bd1.html
-
-
-下载地址
-qq邮箱账号
-https://www.oracle.com/technetwork/cn/database/enterprise-edition/downloads/112010-linx8664soft-098700-zhs.html
-
-wget https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_1of2.zip?AuthParam=1543451837_062bf11620f929884b2e1b893f32f6e7
-
-wget https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1543452074_2a7fe6a8ffb48e324ea659455d344c05
-
-wget https://download.oracle.com/otn/linux/oracle11g/R2/linux.x64_11gR2_database_2of2.zip?AuthParam=1543545078_fc7f92a66edf07e1e9ef45c811586511
-
-
-1.安装依赖包
-yum -y install binutils* compat-libcap1* compat-libstdc++* gcc* gcc-c++* glibc* glibc-devel* ksh* libaio* libaio-devel* libgcc* libstdc++* libstdc++-devel* libXi* libXtst* make* sysstat* elfutils* unixODBC*
-
-(baidu)
-yum -y install gcc make binutils gcc-c++ compat-libstdc++-33 elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf-devel ksh libaio libaio-devel numactl-devel sysstat unixODBC unixODBC-devel pcre-devel
-
-2.1.1）修改内核参数：
-
-#vi /etc/sysctl.conf
-
-fs.file-max= 6815744
-fs.aio-max-nr=1048576
-net.ipv4.ip_local_port_range= 9000 65500
-net.core.rmem_default= 262144
-net.core.rmem_max= 4194304
-net.core.wmem_default= 262144
-net.core.wmem_max= 1048576
-kernel.sem= 250 32000 100 128
-kernel.shmall= 2097152（可以按照系统默认，不修改）
-kernel.shmmax= 536870912（可以按照系统默认，不修改）
-
-#sysctl -p //让内核参数生效
-或者
-
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-net.ipv4.conf.all.rp_filter = 1
-fs.file-max = 6815744 #设置最大打开文件数
-fs.aio-max-nr = 1048576
-kernel.shmall = 2097152 #共享内存的总量，8G内存设置：2097152*4k/1024/1024
-kernel.shmmax = 2147483648 #最大共享内存的段大小
-kernel.shmmni = 4096 #整个系统共享内存端的最大数
-kernel.sem = 250 32000 100 128
-net.ipv4.ip_local_port_range = 9000 65500 #可使用的IPv4端口范围
-net.core.rmem_default = 262144
-net.core.rmem_max= 4194304
-net.core.wmem_default= 262144
-net.core.wmem_max= 1048576
-
-#sysctl -p
-
-
-
-
-
-
-
-
-
-4.3设置用户环境变量（是在oracle用户下）
-
-#vi /home/oracle/.bash_profile
-
-export ORACLE_BASE=/data/oracle #oracle数据库安装目录
-export ORACLE_HOME=$ORACLE_BASE/product/11.2.0/db_1 #oracle数据库路径
-export ORACLE_SID=orcl #oracle启动数据库实例名
-export ORACLE_UNQNAME=orcl
-export ORACLE_TERM=xterm #xterm窗口模式安装
-export PATH=$ORACLE_HOME/bin:/usr/sbin:$PATH #添加系统环境变量
-export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib #添加系统环境变量
-export LANG=C #防止安装过程出现乱码
-export NLS_LANG=AMERICAN_AMERICA.ZHS16GBK #设置Oracle客户端字符集，必须与Oracle安装时设置的字符集保持一致
- 
-#source /home/oracle/.bash_profile //加载文件使配置生效
-
-#env|more //查看配置的环境变量是否正确
-
-
-将oracle使用者加入到sudo群组中
-#vi /etc/sudoers
-
-root		ALL=(ALL)		ALL 
-oracle	ALL=(ALL) 	ALL
-
-记得强制保存退出哦！！！
-
-
-
-vi /etc/hosts
-127.0.0.1 zsl.cn
-
-
-#mkdir /data/oracle/oradata //存放数据库目录
-#mkdir /data/oracle/inventory
-#mkdir /data/oracle/flash_recovery_area
-mkdir /data/oracle/product/11.2.0/db_1 -p
-#chown -R oracle:oinstall /data/
-
-
-安装
-使用oracle用户安装
-#su oracle
-mkdir /data/oracle/product/11.2.0/db_1 -p
-进入刚才解压的database目录
-/data/database/response/db_install.rsp
-$cd /data/database/
-$./runInstaller -silent -responseFile /data/database/response/db_install.rsp –ignorePrereq
-
-
-
-安装后操作
-按照要求执行脚本。
-打开新的终端，以root身份登录，执行脚本：
-#/data/oraInventory/orainstRoot.sh
-#/data/oracle/product/11.2.0/db_1/root.sh
-配置监听
-编辑oracle安装目录下的netca.rsp应答文件，地址为：
-
-/data /database/response/netca.rsp，主要查看以下参数配置：
-INSTALL_TYPE=""custom"" #安装的类型
-LISTENER_NUMBER=1 #监听器数量
-LISTENER_NAMES={"LISTENER"} #监听器的名称列表
-LISTENER_PROTOCOLS={"TCP;1521"} #监听器使用的通讯协议列表
-LISTENER_START=""LISTENER"" #监听器启动的名称
-检查完毕后，执行命令：
-$netca /silent /responseFile /data/database/response/netca.rsp
-执行后成功如下所示：
 
 
 
@@ -153,8 +14,8 @@ SYSPASSWORD ="oracle"//SYS管理员密码
 SYSTEMPASSWORD ="oracle"//SYSTEM管理员密码
 SYSMANPASSWORD= "oracle"
 DBSNMPPASSWORD= "oracle"
-DATAFILEDESTINATION =/data/oracle/oradata//数据文件存放目录
-RECOVERYAREADESTINATION=/data/oracle/flash_recovery_area//恢复数据存放目录
+DATAFILEDESTINATION =/u01/app/oracle/oradata 数据文件存放目录
+RECOVERYAREADESTINATION=/u01/app/oracle/fast_recovery_area //恢复数据存放目录
 CHARACTERSET ="ZHS16GBK"//字符集，重要!!!建库后一般不能更改，所以建库前要确定清楚。
 TOTALMEMORY ="1638"//1638MB，物理内存2G*80%。
 安装
@@ -308,214 +169,6 @@ SID_LIST_addb =
 
 
 
-yum install wget unzip vim -y
-
-
-依赖安装
-(baidu)
-yum -y install gcc make binutils gcc-c++ compat-libstdc++-33 elfutils-libelf-devel elfutils-libelf-devel-static elfutils-libelf-devel ksh libaio libaio-devel numactl-devel sysstat unixODBC unixODBC-devel pcre-devel
-
-
-添加oinstall 、dba 组
-
-#groupadd oinstall //创建oinstall组
-
-#groupadd dba //创建dba组
-
-#useradd -g oinstall -G dba oracle //新建用户oracle，设定其主组为oinstall,副组为dba
-
-#id oracle //检查结果
-
-#passwd oracle //设置oracle用户密码
-
-
-修改内核参数：编辑 
-vi /etc/sysctl.conf
-
-添加以下设置：
-
-io-max-nr = 1048576
-fs.file-max = 6815744
-kernel.shmall = 2097152
-kernel.shmmax = 1073741824
-kernel.shmmni = 4096
-kernel.sem = 250 32000 100 128
-net.ipv4.ip_local_port_range = 9000 65500
-net.core.rmem_default = 262144
-net.core.rmem_max = 4194304
-net.core.wmem_default = 262144
-net.core.wmem_max = 1048576
-
-让参数生效：sysctl -p
-
-修改用户的限制文件，编辑 
-vim /etc/security/limits.conf
-
-oracle           soft    nproc           2047
-oracle           hard    nproc           16384
-oracle           soft    nofile          1024
-oracle           hard    nofile          65536
-oracle           soft    stack           10240
-
-
-修改
-vi /etc/pam.d/login
-
-session  required   /lib64/security/pam_limits.so
-session  required   pam_limits.so
-
-修改/etc/profile文件：
-
-[root@woitumi-197 ~]# vim /etc/profile
-
-if [ $USER = "oracle" ]; then
-  if [ $SHELL = "/bin/ksh" ]; then
-   ulimit -p 16384
-   ulimit -n 65536
-  else
-   ulimit -u 16384 -n 65536
-  fi
-fi
-
-创建安装目录、修改文件权限
-
-
-mkdir -p /u01/app/oracle/product/11.2.0
-
-mkdir /u01/app/oracle/oradata
-
-mkdir /u01/app/oracle/inventory
-
-mkdir /u01/app/oracle/fast_recovery_area
-
-[root@woitumi-197 ~]# chown -R oracle:oinstall /u01/app/oracle
-
-[root@woitumi-197 ~]# chmod -R 775 /u01/app/oracle
-
-上传oracle软件包到 /tmp目录下（xftp上传）
-
-
-解压oracle软件包：
-cd /tmp
-[root@woitumi-197 tmp]# unzip linux.x64_11gR2_database_1of2.zip && unzip linux.x64_11gR2_database_2of2.zip
-
-
-切换到oracle用户，设置oracle用户环境变量
-
-[root@woitumi-197 database]# su oracle
-cd /home/oracle/
-
-[oracle@woitumi-197 ~]$ vim .bash_profile
-
-添加：
-ORACLE_BASE=/u01/app/oracle
-ORACLE_HOME=$ORACLE_BASE/product/11.2.0
-ORACLE_SID=orcl
-PATH=$PATH:$ORACLE_HOME/bin
-export ORACLE_BASE ORACLE_HOME ORACLE_SID PATH
-
-source /home/oracle/.bash_profile
-
-
-
-
-编辑静默安装响应文件
-
-cd /tmp/database/response/
-cp /tmp/database/response/db_install.rsp  /tmp/database/response/db_install.rsp.bak
-[root@woitumi-197 response]# vim db_install.rsp
-
-修改以下参数：
-oracle.install.option=INSTALL_DB_SWONLY
-ORACLE_HOSTNAME=zsl.cn
-UNIX_GROUP_NAME=oinstall
-INVENTORY_LOCATION=/u01/app/oracle/inventory
-SELECTED_LANGUAGES=en,zh_CN
-ORACLE_HOME=/u01/app/oracle/product/11.2.0
-ORACLE_BASE=/u01/app/oracle
-oracle.install.db.InstallEdition=EE
-oracle.install.db.DBA_GROUP=dba
-oracle.install.db.OPER_GROUP=dba
-DECLINE_SECURITY_UPDATES=true
-
-
-cd /tmp/database/
-[root@zsl database]# su oracle
-
-./runInstaller -silent -ignorePrereq -ignoreSysPrereqs -responseFile /tmp/database/response/db_install.rsp
-
-
-提示：$ Exception in thread "main" java.lang.NoClassDefFoundError
-root 用户下执行
-unset DISPLAY
-
-
-安装过程日志查看
-tail -F /u01/app/oracle/inventory/logs/installActions2018-11-29_10-14-15PM.log
-
-
-按照提示切换root用户运行脚本
-
-
-[oracle@woitumi-197 database]$ su
-
-[root@woitumi-197 database]# sh /u01/app/oracle/product/11.2.0/root.sh
-
-
-vi /tmp/database/response/netca.rsp，主要查看以下参数配置：也可以不配置
-INSTALL_TYPE=""custom"" #安装的类型
-LISTENER_NUMBER=1 #监听器数量
-LISTENER_NAMES={"LISTENER"} #监听器的名称列表
-LISTENER_PROTOCOLS={"TCP;1521"} #监听器使用的通讯协议列表
-LISTENER_START=""LISTENER"" #监听器启动的名称
-
-用oracle用户登录配置监听
-[oracle@woitumi-197 ~]$ netca -silent -responseFile /tmp/database/response/netca.rsp
-
-出现下图情况时，则需要配置DISPLAY变量，配完之后重新netca：
-
-[root@localhost ~]# export DISPLAY=:0.0
-yum whatprovides "*/xhost"
-yum install xorg-x11-server-utils-7.7-20.el7.x86_64 -y
-
-[root@localhost ~]# xhost +
-
-ll /u01/app/oracle/product/11.2.0/bin/netca
-
-
-#su - oracle
-
-[oracle@zsl database]$ export DISPLAY=local_host:0.0
-[oracle@zsl database]$ netca -silent -responseFile /tmp/database/response/netca.rsp
-
-$ll $ORACLE_HOME/network/admin/*.ora
-$lsnrctl status
-
-netstat -tnulp | grep 1521
-执行完后,监听就已经启动了,默认端口是1521,默认是动态监听,只要实例启动了就会监听到.
-
-重置安装文件
-rm -rf ./inventory/*
-
-rm -rf ./fast_recovery_area/*
-
-rm -rf ./product/11.2.0/*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 官网包
 
@@ -549,6 +202,19 @@ unixODBC-2.3.1-6.el7.i686 or later
 unixODBC-devel-2.3.1-6.el7.x86_64 or later
 
 unixODBC-devel-2.3.1-6.el7.i686 or later
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

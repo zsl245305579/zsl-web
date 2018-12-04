@@ -1,35 +1,10 @@
-https://www.cnblogs.com/chinafine/articles/1755405.html
-
-select table_name from user_tables;
-
-select * from all_tables where owner='TEST'；
-
-TEST为用户名，用户名必须是大写。
-
- 
-
-查看当前登录的用户的表:
-
-  select table_name from user_tables;
-
-
-
-
 步骤一：关闭数据库
 1.export ORACLE_SID=zsl2
 2.sqlplus / as sysdba
 3.shutdown immediate
-
 find $ORACLE_BASE/ -name zsl2
-
-
-
 find $ORACLE_BASE/ -name zsl2 -exec rm -rf {} \;
-
-
 find $ORACLE_BASE/ -name zsl2
-
-
 find $ORACLE_BASE/* -name '*[Zz][Ss][Ll][2]*' | grep -v admin | grep -v oradata
 
 
@@ -37,10 +12,16 @@ find $ORACLE_BASE/* -name '*[Zz][Ss][Ll][2]*' | grep -v admin | grep -v oradata
 1.vi /etc/oratab
 2.找到 bgsp:/Oracle_11g/oracle:N
 
-
 /u01/app/oracle/product/11.2.0/dbs
 
+https://www.cnblogs.com/chinafine/articles/1755405.html
+select table_name from user_tables;
+select * from all_tables where owner='TEST'；
 
+TEST为用户名，用户名必须是大写。
+
+查看当前登录的用户的表:
+select table_name from user_tables;
 
 数据库日常操作命令
 
