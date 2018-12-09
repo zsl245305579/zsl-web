@@ -1,0 +1,169 @@
+然后启动监听器
+
+1.lsnrctl start  
+会看到启动成功的界面;
+
+1.lsnrctl stop  
+停止监听器命令.
+
+
+1.lsnrctl status  
+查看监听器命令.
+
+1. root用户登录oracle服务器
+
+#新建Oracle数据库备份存放目录
+
+mkdir –p /home/oracle/backup 
+
+chown–R oracle:oinstall /home/oracle/backup
+
+ 
+
+2. 创建目录对象
+
+ 
+
+因为使用expdp命令需要使用到目录对象（directory），所以首先需要创建目录对象，并赋予某个用户对象的操作权限。
+
+操作步骤如下：
+
+#切换到oracle用户
+
+Su – oracle
+
+#切换到SQLPLUS环境
+
+Sqlplus / as sysdba
+
+执行以下命令：
+
+#制定EXPDP输出目录
+
+create directory expdp_bak_dir as ‘/home/oracle/backup’;
+
+#授予system权限
+
+grant create any directory to system;
+
+ 
+
+3. 编辑自动备份脚本
+
+ 
+
+#新建脚本文件
+
+vi /data/oracle/AutoBackup.sh
+
+#脚本文件内输入以下代码
+
+#!/bin/sh
+
+export ORACLE_BASE=/data/oracle
+
+export ORACLE_HOME=/data/oracle/product/11.2.0/db_1
+
+export ORACLE_SID="ORCL"
+
+export PATH=$PATH:$HOME/bin:$ORACLE_HOME/bin
+
+export DATA_DIR=/home/oracle/backup
+
+create or replace directory ORCL as ' /u01/app/oracle/beifen';
+grant read,write on directory ORCL to zsl4;
+
+expdp zsl4/zsl4@ORCL dumpfile=ORCL.dmp logfile=ORCL.log directory=ORCL schemas=zsl4 compression=all
+
+
+
+rq=`date +%Y%m%d`
+
+cleardate=`date -d "1 month ago" +%Y%m%d`
+
+rm -rf /home/oracle/backup/YG$rq.dmp
+
+expdp system/tjca1q@orcl dumpfile=YG$rq.dmp logfile=log_YG$rq.log directory=expdp_bak_dir schemas=tjca compression=all
+
+ 
+
+#以上，rq为日期；cleardate为清除日期（1 month ago一个月前）；rm为删除命令；schemas=用户对象；compression为压缩，值为all时代表全压缩。
+
+按Ctrl+c退出编辑模式，按shift+:输入wq 写入并退出。
+
+ 
+
+ 
+
+4. 设置系统自动定时执行备份脚本
+
+ 
+
+#编辑系统任务计划
+
+vi /etc/crontab
+
+#将下列代码写入最后一行（如第一次设置则为空文件）：
+
+00 23 * * * oracle /data/oracle/AutoBackup.sh
+
+#:wq写入退出
+
+#以上语句代表：每天23:00，以oracle用户执行AutoBackup.sh脚本文件进行备份。
+
+servicecrond restart#重启系统计划服务
+
+crontab–l #查看任务是否设置成功
+
+ 
+
+#crond常用命令
+
+service crond start #启动服务
+
+service crond start #停止服务
+
+service crond restart #重启服务
+
+service crond reload #重新载入配置
+
+
+
+
+
+
+
+
+
+
+
+
+
+运行cmd命令行
+
+  录入 sqlplus /nolog  无用户名登录
+
+        conn /as sysdba  连接到数据本地数据
+
+        alter user system identified by password;   修改System 密码  为password
+
+D:\oracle\ora92\bin>sqlplus /nolog
+
+SQL*Plus: Release 9.2.0.1.0 - Production on 星期四 8月 16 11:32:22 2007
+
+Copyright (c) 1982, 2002, Oracle Corporation.  All rights reserved.
+
+SQL> conn /as sysdba
+已连接。
+SQL> alter user system identified by password;
+
+用户已更改。
+
+SQL> alter user sys identified by password;
+
+用户已更改。
+
+SQL> alter user system identified by manger;
+
+解锁方法
+ alter user system account unlock;

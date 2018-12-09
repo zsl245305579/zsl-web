@@ -31,107 +31,32 @@ ORCL
 1.export ORACLE_SID=ORCL
 2.sqlplus / as sysdba
 startup #开启
-
-shutdown immediate #关闭
-
-shutdown有四个参数：normal、transactional、immediate、abort。缺省不带任何参数时表示是normal。
-shutdown normal：启动时不需要实例恢复，这种方法往往不能关闭数据库或等待很长时间。
-shutdown immediate：没有结束的事务是自动rollback的。启动最常用的方法。
-
-
+startup nomount
+startup mount dbname
+startup open dbname
+注意：
+startup，等于以下三个命令
+startup nomount
+alter database mount
+alter database open
+FORCE
 
 NOMOUNT：启动数据库实例， 此时读取参数文件，但是不加载数据库；
 MOUNT：启动数据库实例，加载数据库，但是数据库处于关闭状态；
 OPEN：启动数据库实例，加载并打开数据库；
 FORCE：终止实例并重启数据库，这种模式在数据库关闭或者启动遇到问题时使用，这种方式不到万不得已时不要使用，会有数据丢失；
 
-1）NOMOUNT
-这种模式只会创建实例（创建Oracle其中有5个进程必须启动， DBWR、LGWR、SMON、PMON、CKPT），也不会打开任何数据文件。
-
-
-select * from v$datafile;
-show parameer control_files;
-
-2）MOUNT
-切换状态
-alert database mount;
-startup mount
-
-select FILE#, STATUS, NAME from v$datafile;
-
-select * from scott.dept;
-
-3)open
-
-alter database open
-
-startup open;
-
-4）FORCE
-这种模式将终止实例并重启数据库，这是一种强制性启动模式，只有在启动或者关闭出现问题时才使用，并且有一定的风险，会丢失数据，造成意外的问题。
-
 shutdown immediate 
 startup force
 select * from scott.dept;
 
 
-1）startup nomount
-非安装启动，这种方式启动下可执行：重建控制文件、重建数据库
-读取init.ora文件，启动instance，即启动SGA和后台进程，这种启动只需要init.ora文件。
 
-
-2）startup mount dbname
-安装启动，这种方式启动下可执行：
-数据库日志归档、
-数据库介质恢复、
-使数据文件联机或脱机，
-重新定位数据文件、重做日志文件。
-执行“nomount”，然后打开控制文件，确认数据文件和联机日志文件的位置，
-但此时不对数据文件和日志文件进行校验检查。
-  
-3）startup open dbname
-先执行“nomount”，然后执行“mount”，再打开包括Redo log文件在内的所有数据库文件，
-这种方式下可访问数据库中的数据。
-  
-4）startup，等于以下三个命令
-startup nomount
-alter database mount
-alter database open
-
-5）startup restrict
-约束方式启动
-这种方式能够启动数据库，但只允许具有一定特权的用户访问
-非特权用户访问时，会出现以下提示：
-ERROR：
-ORA-01035: ORACLE 只允许具有 RESTRICTED SESSION 权限的用户使用
-  
-6）startup force
-强制启动方式
-当不能关闭数据库时，可以用startup force来完成数据库的关闭
-先关闭数据库，再执行正常启动数据库命令
-  
-7）startup pfile=参数文件名
-带初始化参数文件的启动方式
-先读取参数文件，再按参数文件中的设置启动数据库
-例：startup pfile=E:\Oracle\admin\oradb\pfile\init.ora
-  
-8）startup EXCLUSIVE
-
-
-有三种关闭方式：
-1）shutdown normal
-   正常方式关闭数据库。
-  
-2）shutdown immediate
-   立即方式关闭数据库。
-   在SVRMGRL中执行shutdown immediate，数据库并不立即关闭，
-   而是在Oracle执行某些清除工作后才关闭（终止会话、释放会话资源），
-   当使用shutdown不能关闭数据库时，shutdown immediate可以完成数据库关闭的操作。
-  
-3）shutdown abort
-   直接关闭数据库，正在访问数据库的会话会被突然终止，
-   如果数据库中有大量操作正在执行，这时执行shutdown abort后，重新启动数据库需要很长时间。
-
+shutdown immediate #关闭
+shutdown有四个参数：normal、transactional、immediate、abort。缺省不带任何参数时表示是normal。
+shutdown normal：启动时不需要实例恢复，这种方法往往不能关闭数据库或等待很长时间。
+shutdown immediate：没有结束的事务是自动rollback的。启动最常用的方法。
+shutdown abort：直接关闭数据库，正在访问数据库的会话会被突然终止，如果数据库中有大量操作正在执行，这时执行shutdown abort后，重新启动数据库需要很长时间。
 
 
 https://www.cnblogs.com/qlqwjy/p/8405543.html
@@ -167,7 +92,6 @@ drop user cmsuser;
 
 
 管理员用户登录oracle数据库
-
 1、创建临时表空间
 
 select name from v$tempfile;查出当前数据库临时表空间，主要是使用里面的存放路径；
@@ -193,17 +117,34 @@ create tablespace users02 datafile '/u01/app/oracle/oradata/orcl/users02.dbf'siz
 
 3、创建用户并指定表空间
 create user zsl3 identified by zsl3 default tablespace users02;
+
+create user zsl4 identified by zsl4 default tablespace users02;
 4、赋予用户权限
-grant connect,resource,dba to zsl3;
+grant connect,resource,dba to zsl4;
+
+create directory users02 as ' /u01/app/oracle/users02';
+Grant read,write on directory users02 to zsl4;
+mkdir /u01/app/oracle/users02
+expdp jnfy/123123@orcl directory=users02 dumpfile=users02.dmp schemas=users02 logfile=users02.log;
+
+5.创建导出目录(之后手动创建目录)**/--zsl
+create directory ORCL as ' /u01/app/oracle/beifen';
+
+create or replace directory ORCL as ' /u01/app/oracle/beifen';
+
+5.向新创的用户授权******/
+grant read,write on directory ORCL to zsl4;
+Grant read,write on directory beifen（目录名） to 用户;
+
+
 
 
 
 sql*plus常用命令
 1)、连接命令
 1.conn[ect]
-用法：conn 用户名/密码@网络服务名 [as sysdba/sysoper]
-说明：当用特权用户身份连接时，必须带上as sysdba或是as sysoper
-eg、
+用法：conn 用户名/密码@网络服务名 [as sysdba/sysoper]说明：当用特权用户身份连接时，必须带上as sysdba或是as sysoper
+
 SQL> show user
 USER 为 "SCOTT"
 SQL> conn system/oracle@orcl
@@ -225,7 +166,6 @@ SQL> passw
 新口令:
 重新键入新口令:
 口令已更改
-SQL>
 4.show user
 说明: 显示当前用户名
 5.exit
@@ -235,33 +175,83 @@ SQL>
 
               
 
-2)、文件操作命令
-1.start和@
-说明: 运行sql脚本
-案例: sql>@ d:\a.sql或是sql>start d:\a.sql
-2.edit
-说明: 该命令可以编辑指定的sql脚本
-案例: sql>edit d:\a.sql,这样会把d:\a.sql 这个文件打开
-3.spool
-说明: 该命令可以将sql*plus屏幕上的内容输出到指定文件中去。
-案例: sql>spool d:\b.sql并输入sql>spool off
-eg、
-sql>spool d:\b.sql;
-sql>select * from emp;
-sql>spool off;
+查看备份目录
+select * from dba_directories;
 
-3)、交互式命令
-1.&
-说明：可以替代变量，而该变量在执行时，需要用户输入。
-select * from emp where job='&job'；
+查询所有的数据库
+select name from v$database; 
+select instance_name from v$instance;
 
-4)、显示和设置环境变量
-概述：可以用来控制输出的各种格式，set show 如果希望永久的保存相关的设
-置，可以去修改glogin.sql 脚本
-1.linesize
-说明：设置显示行的宽度，默认是80个字符
-show linesize
-set linesize 90
-2.pagesize说明：设置每页显示的行数目，默认是14
-用法和linesize 一样
-至于其它环境参数的使用也是大同小异
+查看当前用户有哪些表
+select table_name from user_tables;
+oracle查看版本
+select * from v$version;
+
+查看当前连接数据库
+show parameter instance_name;
+
+查看dba_tablespaces表结构*
+desc dba_tablespaces;
+
+查看当前用户
+show user;
+select username from user_users;
+
+查看当前用户所有的权限
+select * from session_privs;
+
+
+
+
+
+
+
+备份导出--zsl
+
+ls /u01/app/oracle/beifen
+mkdir /u01/app/oracle/beifen
+切换oracle
+[root@oracle home]# su – oracle
+[oracle@oracle ~]$ sqlplus / as sysdba
+SQL> create user zsl2 identified by zsl2 default tablespace ORCL;
+SQL> grant connect,resource,dba to 用户
+
+数据导出
+1.sqlplus system/密码 只能用sqlplus
+                          
+3.为oracle用户授予访问数据目录的权限---最后是用户
+SQL> Grant read,write on directory beifen to SYS;    
+[oracle@oracle ~]$ mkdir jnfy
+expdp 用户/用户密码 directory=jnfy dumpfile=jnfy.dmp schemas=jnfy logfile=jnfy.log;
+
+
+mkdir beifen
+expdp sys/123456 directory=beifen dumpfile=beifen.dmp schemas=beifen logfile=beifen.log;
+expdp sbgl/sbgl@orcl dumpfile=pump_dir:SBGL20180129.expdp schemas=sbgl nologfile=y 
+expdp jnfy/123123@orcl directory=jnfy dumpfile=jnfy_`date +%Y%m%d`.dmp schemas=jnfy logfile=jnfy_`date +%Y%m%d`.log;
+导入
+
+Database altered.
+
+SQL> create user 用户 identified by 用户密码 default tablespace jnfy;
+
+SQL> grant connect,resource,dba to 用户
+
+数据导入
+1.sqlplus system/密码 只能用sqlplus
+2.创建数据导入目录import为目录名，':/u01/app/oracle/import'为数据库实际目录
+SQL> create directory import as '/u01/app/oracle/import';                            
+Directory created.
+3.为oracle用户授予访问数据目录的权限---最后是用户
+SQL> Grant read,write on directory import（目录名） to 用户;    
+Grant succeeded.
+[oracle@oracle ~]$ mkdir import
+.执行数据泵入命令，注意一定要在oracle用户下执行，不能登录sqlplus后执行
+[root@oracle oracle]# cd import/
+[root@oracle import]# pwd
+/home/app/oracle/import
+
+
+impdp sbgl/sbgl@orcl dumpfile=pump_dir:SBGL20180129.EXPDP table_exists_action=replace  nologfile=y
+impdp 用户/用户密码 directory=import dumpfile=jnfy.dmp schemas=jnfy logfile=jnfy.log;
+
