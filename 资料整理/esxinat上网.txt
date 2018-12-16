@@ -5,3 +5,7 @@ http://www.it165.net/os/html/201309/6206.html
 https://www.cnblogs.com/kavmors/p/4498768.html
 
 45.115.243.16
+
+45.115.243.24
+อ๘นุ:45.115.240.1
+ัฺย๋:255.255.252.0

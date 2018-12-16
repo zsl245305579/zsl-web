@@ -1,0 +1,474 @@
+https://blog.csdn.net/wh211212/article/details/78743191
+https://blog.csdn.net/Kim_Weir/article/details/79934308
+
+实验前期环境准备：
+三台机器上配置hosts文件，如下：
+[root@xuegod63 ~]# vim  /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.1.1   206.cn
+192.168.1.2   12.cn
+192.168.1.1   13.cn
+
+带.cn.com 才能解析
+
+复制hosts到其它两机器：
+[root@xuegod63 ~]# scp /etc/hosts root@192.168.1.2:/etc/
+[root@xuegod63 ~]# scp /etc/hosts root@192.168.1.3:/etc/
+注意：在/etc/hosts中，不要把机器名字，同时对应到127.0.0.1这个地址，否则会导致数据节点连接不上namenode，报错如下：
+org.apache.hadoop.ipc.Client: Retrying connect to server: master/192.168.1.10:9000?
+
+创建运行hadoop用户账号和Hadoop目录。  尽量不用root帐号运行
+xuegod63： 
+[root@xuegod63 ~]# useradd -u 8000  hadoop   #为了保障，在其它服务器上创建的hadoop用户ID保持一致，创建时，尽量把UID调大
+[root@xuegod63 ~]# echo 123456 | passwd --stdin hadoop
+
+[root@xuegod64 ~]# useradd -u 8000 hadoop 
+[root@xuegod64 ~]# echo 123456 | passwd --stdin hadoop
+
+[root@xuegod62 ~]# useradd -u 8000 hadoop
+[root@xuegod62 ~]# echo 123456 | passwd --stdin hadoop
+注：创建用户hadoop时，不能使用参数-s /sbin/nologin  ,因为稍后我们要su - hadoop 切换用户
+
+
+
+配置在xuegod63上，可以ssh无密码登录机器xuegod63，xuegod64，xuegod62 ，方便后期复制文件和启动服务。因为namenode启动时，会连接到datanode上启动对应的服务。
+生成公钥和私钥
+[root@xuegod63 ~]# su - hadoop
+[hadoop @xuegod63 ~]# ssh-keygen 
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): 
+Created directory '/root/.ssh'.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /root/.ssh/id_rsa.
+Your public key has been saved in /root/.ssh/id_rsa.pub.
+The key fingerprint is:
+b6:be:c5:0f:d5:70:52:cf:5f:7a:a4:c1:bd:26:b9:84 root@xuegod63.cn
+The key's randomart image is:
++--[ RSA 2048]----+
+|              .  |
+|             o + |
+|            o + *|
+|            .=.=+|
+|        S  E.++oo|
+|       . o .. +. |
+|        . +  .   |
+|       . . o     |
+|        o.  .    |
++-----------------+
+
+导入公钥到其他datanode节点认证文件
+[hadoop @xuegod63 ~]# ssh-copy-id 192.168.1.2
+[hadoop @xuegod63 ~]# ssh-copy-id 192.168.1.3
+
+
+
+配置Hadoop环境，安装Java环境JDK：三台机器上都要配置
+xuegod63安装jdk 
+上传jdk软件包到xuegod63
+[root@206 ~]# ls
+anaconda-ks.cfg  jdk-linux-x64.tar.gz  original-ks.cfg  perl5
+
+[root@206 ~]# tar zxf jdk-linux-x64.tar.gz -C /usr/local/
+[root@206 ~]# cd !$
+cd /usr/local/
+[root@206 local]# cd jdk1.8.0_131
+
+[root@206 jdk1.8.0_131]# pwd
+/usr/local/jdk1.8.0_131
+
+[root@xuegod63 ~]#vim /etc/profile  #在文件的最后添加以下内容：
+export JAVA_HOME=/usr/local/jdk1.8.0_131
+export JAVA_BIN=/usr/local/jdk1.8.0_131/bin
+export PATH=${JAVA_HOME}/bin:$PATH
+export CLASSPATH=.:${JAVA_HOME}/lib/dt.jar:${JAVA_HOME}/lib/tools.jar
+
+[root@xuegod63 ~]#source /etc/profile #使配置文件生效
+
+验证java运行环境是否安装成功：
+[root@xuegod63 ~]#  java -version
+java version "1.8.0_131"
+
+scp -r /usr/local/jdk1.8.0_131 root@192.168.1.2:/usr/local/jdk1.8.0_131
+
+scp -r /usr/local/jdk1.8.0_131 root@192.168.1.3:/usr/local/jdk1.8.0_131
+
+将jdk部署到其它两台机器上：
+
+[root@xuegod63 ~]# scp /etc/profile 192.168.1.2:/etc/profile
+[root@xuegod63 ~]# scp /etc/profile 192.168.1.3:/etc/profile
+两台都看一下环境
+java -version
+
+
+在xuegod63安装Hadoop 并配置成namenode主节点
+Hadoop安装目录：/home/hadoop/hadoop-2.6.5
+使用root帐号将hadoop-2.6.5.tar.gz  上传到服务器
+su - hadoop
+创建hadoop相关的工作目录
+ [hadoop@xuegod62 ~]$ mkdir -p /home/hadoop/dfs/name /home/hadoop/dfs/data /home/hadoop/dfs/tmp   #三个都创建
+
+hadoop-2.6.5.tar.gz  original-ks.cfg
+[root@206 ~]# cp hadoop-2.6.5.tar.gz /home/hadoop/
+
+[hadoop@206 ~]$ ls
+dfs  hadoop-2.6.5.tar.gz  perl5  tmp
+
+
+配置Hadoop：需要修改7个配置文件。
+[hadoop@206 ~]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/hadoop-env.sh
+[hadoop@206 ~]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/yarn-env.sh
+[hadoop@206 ~]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/slaves
+[hadoop@206 ~]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/core-site.xml
+[hadoop@206 ~]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/hdfs-site.xml
+
+
+
+文件位置：/home/hadoop/hadoop-2.6.5/etc/hadoop/
+文件名称：hadoop-env.sh、yarn-evn.sh、slaves、core-site.xml、hdfs-site.xml、mapred-site.xml、yarn-site.xml
+
+1、配置文件hadoop-env.sh，指定hadoop的java运行环境
+该文件是hadoop运行基本环境的配置，需要修改的为java虚拟机的位置。
+[hadoop@xuegod63 hadoop-2.6.5]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/hadoop-env.sh
+改：25 export JAVA_HOME=${JAVA_HOME}
+为：export JAVA_HOME=/usr/local/jdk1.8.0_131
+注：指定java运行环境变量
+
+2、配置文件yarn-env.sh，指定yarn框架的java运行环境
+该文件是yarn框架运行环境的配置，同样需要修改java虚拟机的位置。
+yarn ：Hadoop 的新 MapReduce 框架Yarn是Hadoop 自 0.23.0 版本后新的 map-reduce 框架（Yarn) 原理。
+
+[hadoop@xuegod63 hadoop-2.6.5]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/yarn-env.sh
+改：26   JAVA_HOME=$JAVA_HOME
+为：26   JAVA_HOME=/usr/local/jdk1.8.0_131
+
+3、配置文件slaves ，指定datanode 数据存储服务器
+将所有DataNode的机器名字写入此文件中，每个主机名一行，配置如下：
+[hadoop@xuegod63 hadoop-2.6.5]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/slaves
+改：localhost 
+为：
+12.cn
+13.cn
+
+4、配置文件core-site.xml，指定访问hadoop web界面访问路径
+这个是hadoop的核心配置文件，这里需要配置的就这两个属性，fs.default.name配置了hadoop的HDFS系统的命名，位置为主机的9000端口；
+hadoop.tmp.dir配置了hadoop的tmp目录的根位置。这里使用了一个文件系统中没有的位置，所以要先用mkdir命令新建一下。
+
+[hadoop@xuegod63 hadoop-2.6.5]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/core-site.xml
+改：
+19 <configuration>
+20 </configuration>
+注： 在<configuration>和</configuration>中间插入以一下红色和蓝色标记内容：
+为：
+<configuration>
+
+<property>
+ 21       <name>fs.defaultFS</name>
+ 22           <value>hdfs://206.cn:9000</value>
+ 23  </property>
+ 24 
+ 25  <property>
+ 26      <name>io.file.buffer.size</name>
+ 27          <value>131072</value>
+ 28  </property>
+ 29 
+ 30  <property>
+ 31      <name>hadoop.tmp.dir</name>
+ 32          <value>file:/home/hadoop/dfs/tmp</value>
+ 33              <description>Abase for other temporary directories.</description>
+
+
+</configuration>
+
+注：property    财产
+
+5、配置文件hdfs-site.xml 
+这个是hdfs的配置文件，dfs.http.address配置了hdfs的http的访问位置；
+dfs.replication配置了文件块的副本数，一般不大于从机的个数。
+[root@xuegod63 ~]# vim /home/hadoop/hadoop-2.6.5/etc/hadoop/hdfs-site.xml
+改：19 <configuration>
+ 20 
+ 21 </configuration> 
+注： 在<configuration>和</configuration>中间插入以一下红色和蓝色标记内容：
+为：
+<configuration>
+  <property>
+      <name>dfs.namenode.secondary.http-address</name>
+      <value>206.cn:9001</value>
+  </property>
+
+  <property>
+      <name>dfs.namenode.name.dir</name>
+      <value>file:/home/hadoop/dfs/name</value>
+  </property>
+ <property>
+    <name>dfs.datanode.data.dir</name>
+        <value>file:/home/hadoop/dfs/data</value>
+ </property>
+
+ <property>
+    <name>dfs.replication</name>
+    <value>2</value>  
+ </property>
+
+ <property>
+    <name>dfs.webhdfs.enabled</name>
+        <value>true</value>
+ </property>
+
+</configuration>
+
+注：
+<property>
+      <name>dfs.namenode.secondary.http-address</name>
+      <value>206.cn:9001</value>   # 通过web界面来查看HDFS状态
+  </property>
+ <property>
+    <name>dfs.replication</name>
+    <value>2</value>    #每个Block有2个备份。
+ </property>
+
+6、配置文件mapred-site.xml，
+这个是mapreduce任务的配置，由于hadoop2.x使用了yarn框架，所以要实现分布式部署，必须在mapreduce.framework.name属性下配置为yarn。mapred.map.tasks和mapred.reduce.tasks分别为map和reduce的任务数，
+同时指定：Hadoop的历史服务器historyserver
+Hadoop自带了一个历史服务器，可以通过历史服务器查看已经运行完的Mapreduce作业记录，比如用了多少个Map、用了多少个Reduce、作业提交时间、作业启动时间、作业完成时间等信息。默认情况下，Hadoop历史服务器是没有启动的，我们可以通过下面的命令来启动Hadoop历史服务器
+$ sbin/mr-jobhistory-daemon.sh? start historyserver
+这样我们就可以在相应机器的19888端口上打开历史服务器的WEB UI界面。可以查看已经运行完的作业情况。
+生成mapred-site.xml 
+[hadoop@xuegod63 hadoop-2.6.5]$ cp /home/hadoop/hadoop-2.6.5/etc/hadoop/mapred-site.xml.template /home/hadoop/hadoop-2.6.5/etc/hadoop/mapred-site.xml
+
+[hadoop@xuegod63 hadoop-2.6.5]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/mapred-site.xml
+改：19 <configuration>
+ 20 
+ 21 </configuration> 
+注： 在<configuration>和</configuration>中间插入以一下红色和蓝色标记内容：
+为：
+<configuration>
+
+ <property>
+    <name>mapreduce.framework.name</name>
+    <value>yarn</value>
+ </property>
+
+ <property>
+     <name>mapreduce.jobhistory.address</name>
+     <value>206.cn:10020</value>
+ </property>
+
+ <property>
+     <name>mapreduce.jobhistory.webapp.address</name>
+     <value>206.cn:19888</value>
+ </property>
+
+</configuration>
+
+7、配置节点yarn-site.xml
+该文件为yarn框架的配置,主要是一些任务的启动位置
+
+[hadoop@xuegod63 hadoop-2.6.5]$ vim /home/hadoop/hadoop-2.6.5/etc/hadoop/yarn-site.xml    
+# 修改configuration内容如下：?
+
+改：
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+
+</configuration>
+注： 在<configuration>和</configuration>中间插入以一下红色和蓝色标记内容：
+
+为：
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+ <property>
+     <name>yarn.nodemanager.aux-services</name>
+     <value>mapreduce_shuffle</value>
+ </property>
+
+ <property>
+     <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+     <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+ </property>
+
+ <property>
+    <name>yarn.resourcemanager.address</name>
+    <value>206.cn:8032</value>
+ </property>
+
+ <property>
+     <name>yarn.resourcemanager.scheduler.address</name>
+         <value>206.cn:8030</value>
+ </property>
+
+ <property>
+     <name>yarn.resourcemanager.resource-tracker.address</name>
+     <value>206.cn:8031</value>
+ </property>
+
+ <property>
+    <name>yarn.resourcemanager.admin.address</name>
+    <value>206.cn:8033</value>
+ </property>
+
+ <property>
+    <name>yarn.resourcemanager.webapp.address</name>
+    <value>206.cn:8088</value>
+ </property>
+
+</configuration>
+
+复制到其他datanode节点： xuegod64和xuegod62
+
+scp -r /home/hadoop/hadoop-2.6.5 hadoop@192.168.1.2:/home/hadoop/
+scp -r /home/hadoop/hadoop-2.6.5 hadoop@13:/home/hadoop/
+
+
+
+[hadoop@xuegod63 hadoop-2.6.5]$ scp -r /home/hadoop/hadoop-2.6.5 hadoop@12.cn:~/
+[hadoop@xuegod63 hadoop-2.6.5]$ scp -r /home/hadoop/hadoop-2.6.5 hadoop@13.cn:~/
+
+
+
+
+
+在xuegod63上启动Hadoop
+切换到hadoop用户
+（3）格式化
+hadoop namenode的初始化,只需要第一次的时候初始化，之后就不需要了
+[hadoop@xuegod63 hadoop-2.6.5]$ /home/hadoop/hadoop-2.6.5/bin/hdfs namenode -format
+15/08/03 22:35:21 INFO common.Storage: Storage directory /home/hadoop/dfs/name has been successfully formatted.
+。。。
+15/08/03 22:35:21 INFO util.ExitUtil: Exiting with status 0
+15/08/03 22:35:21 INFO namenode.NameNode: SHUTDOWN_MSG: 
+/************************************************************
+SHUTDOWN_MSG: Shutting down NameNode at xuegod63.cn/192.168.1.63
+************************************************************/
+
+[root@xuegod63 hadoop-2.6.5]# echo $?
+0
+
+查看格式化后，生成的文件：
+ rpm -ivh /mnt/Packages/tree-1.6.0-10.el7.x86_64.rpm #root下安装
+[hadoop@xuegod63 ~]$ tree  /home/hadoop/dfs/
+/home/hadoop/dfs/
+├── data
+└── name
+    └── current
+        ├── fsimage_0000000000000000000
+        ├── fsimage_0000000000000000000.md5
+        ├── seen_txid
+        └── VERSION
+
+生成基于hadoop用户的不输入密码登录：因为后期使用hadoop用户启动datanode节点使用需要直接登录到对应的服务器上启动datanode相关服务。
+[hadoop@xuegod63 hadoop-2.6.5]$ ssh-keygen
+[hadoop@xuegod63 hadoop-2.6.5]$ ssh-copy-id 192.168.1.1
+[hadoop@xuegod63 hadoop-2.6.5]$ ssh-copy-id 192.168.1.2
+[hadoop@xuegod63 hadoop-2.6.5]$ ssh-copy-id 192.168.1.3
+
+
+（4）启动hdfs: ./sbin/start-dfs.sh，即启动HDFS分布式存储
+[root@xuegod63 hadoop-2.6.5]# /home/hadoop/hadoop-2.6.5/sbin/start-dfs.sh
+Starting namenodes on [xuegod63.cn]
+xuegod63.cn: starting namenode, logging to /home/hadoop/hadoop-2.6.5/logs/hadoop-root-namenode-xuegod63.cn.out
+xuegod64.cn: starting datanode, logging to /home/hadoop/hadoop-2.6.5/logs/hadoop-root-datanode-xuegod64.cn.out
+xuegod62.cn: starting datanode, logging to /home/hadoop/hadoop-2.6.5/logs/hadoop-root-datanode-xuegod62.cn.out
+Starting secondary namenodes [xuegod63.cn]
+xuegod63.cn: starting secondarynamenode, logging to /home/hadoop/hadoop-2.6.5/logs/hadoop-root-secondarynamenode-xuegod63.cn.out
+注：如果报错，如：
+xuegod64.cn: Host key verification failed.
+解决：
+[hadoop@xuegod63 ~]$ ssh 192.168.1.64   #确认可以不输入密码直接连接上xuegod64
+关闭后再重启：
+[root@xuegod63 hadoop-2.6.5]# /home/hadoop/hadoop-2.6.5/sbin/stop-dfs.sh
+[root@xuegod63 hadoop-2.6.5]# /home/hadoop/hadoop-2.6.5/sbin/start-dfs.sh
+
+
+（5）查看进程，此时master有进程：namenode和 secondarynamenode进程：
+[root@xuegod63 ~]# ps -axu | grep namenode --color
+Warning: bad syntax, perhaps a bogus '-'? See /usr/share/doc/procps-3.2.8/FAQ
+root      8214  4.1  9.5 1882176 110804 ?      Sl   17:39   0:17 /usr/java/jdk1.7.0_71/bin/java -Dproc_namenode -Xmx1000m 
+。。。
+-Dhadoop.log.dir=/home/hadoop/hadoop-2.6.5/logs -Dhadoop.log.file=hadoop-root-secondarynamenode-xuegod63.cn.log 
+
+xuegod64和xuegod62上有进程：DataNode?
+[root@xuegod64 ~]# ps -axu | grep datanode --color
+Warning: bad syntax, perhaps a bogus '-'? See /usr/share/doc/procps-3.2.8/FAQ
+root      5749  8.8  5.2 1851956 60656 ?       Sl   17:55   0:06 /usr/java/jdk1.7.0_71/bin/java -Dproc_datanode -Xmx1000m 
+。。。
+
+
+（6）在xuegod63上启动yarn: ./sbin/start-yarn.sh  即，启动分布式计算
+[root@xuegod63 hadoop-2.6.5]# /home/hadoop/hadoop-2.6.5/sbin/start-yarn.sh 
+starting yarn daemons
+starting resourcemanager, logging to /home/hadoop/hadoop-2.6.5/logs/yarn-root-resourcemanager-xuegod63.cn.out
+xuegod62.cn: starting nodemanager, logging to /home/hadoop/hadoop-2.6.5/logs/yarn-root-nodemanager-xuegod62.cn.out
+xuegod64.cn: starting nodemanager, logging to /home/hadoop/hadoop-2.6.5/logs/yarn-root-nodemanager-xuegod64.cn.out
+
+
+
+（7）查看进程：
+查看xuegod63上的ResourceManager进程，xuegod62和xuegod64上的进程：DataNode NodeManager
+[root@xuegod63 ~]#  ps -axu | grep resourcemanager --color
+Warning: bad syntax, perhaps a bogus '-'? See /usr/share/doc/procps-3.2.8/FAQ
+root      9664  0.2 11.0 2044624 128724 pts/3  Sl   17:58   0:27 /usr/java/jdk1.7.0_71/bin/java -Dproc_resourcemanager -Xmx1000m
+
+[root@xuegod62 ~]#  ps -axu | grep nodemanager --color
+Warning: bad syntax, perhaps a bogus '-'? See /usr/share/doc/procps-3.2.8/FAQ
+hadoop    5486 31.8  7.8 1913012 91692 ?       Sl   23:01   0:20 /usr/java/jdk1.7.0_71/bin/java -Dproc_nodemanager -Xmx1000m -Dhadoop.log.dir=/home/hadoop/hadoop-2.6.5/logs
+
+[root@xuegod64 ~]#  ps -axu | grep nodemanager --color
+Warning: bad syntax, perhaps a bogus '-'? See /usr/share/doc/procps-3.2.8/FAQ
+hadoop    2872 20.8  7.9 1913144 92860 ?       Sl   21:42   0:15 /usr/java/jdk1.7.0_71/bin/java -Dproc_nodemanager -Xmx1000m
+
+
+注：start-dfs.sh  和 start-yarn.sh 这两个脚本可用start-all.sh代替。
+[hadoop@xuegod63 ~]$ /home/hadoop/hadoop-2.6.5/sbin/start-all.sh
+关闭：
+[hadoop@xuegod63 ~]$ /home/hadoop/hadoop-2.6.5/sbin/stop-all.sh
+
+
+
+
+启动：/apreduce运行状态
+[root@xuegod63 hadoop-2.6.5]# /home/hadoop/hadoop-2.6.5/sbin/mr-jobhistory-daemon.sh start historyserver
+starting historyserver, logging to /home/hadoop/hadoop-2.6.5/logs/mapred-root-historyserver-xuegod63.cn.out
+
+（8）查看HDFS分布式文件系统状态：
+[hadoop@xuegod63 hadoop-2.6.5]$ /home/hadoop/hadoop-2.6.5/bin/hdfs dfsadmin -report
+。。。
+-------------------------------------------------
+Datanodes available: 1 (1 total, 0 dead)
+
+Live datanodes:
+Name: 192.168.1.62:50010 (xuegod62.cn)
+Hostname: xuegod62.cn
+Decommission Status : Normal
+Configured Capacity: 10320982016 (9.61 GB)
+DFS Used: 24576 (24 KB)
+Non DFS Used: 4737789952 (4.41 GB)
+DFS Remaining: 5583167488 (5.20 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 54.10%
+Last contact: Sun May 31 21:58:00 CST 2015
+
+Name: 192.168.1.64:50010 (xuegod64.cn)
+Hostname: xuegod64.cn
+Decommission Status : Normal
+Configured Capacity: 10320982016 (9.61 GB)
+DFS Used: 24576 (24 KB)
+Non DFS Used: 5014945792 (4.67 GB)
+DFS Remaining: 5306011648 (4.94 GB)
+DFS Used%: 0.00%
+DFS Remaining%: 51.41%
+Last contact: Mon Aug 03 23:00:03 CST 2015
+
+
+（9）查看文件块组成： 一个文件由哪些块组成
+hadoop@xuegod63 ~]$ /home/hadoop/hadoop-2.6.5/bin/hdfs fsck / -files -blocks
+
+（10）Web查看HDFS: http://192.168.1.1:50070
+
+
+（11）通过Web查看hadoop集群状态: http://192.168.1.1:8088
+
