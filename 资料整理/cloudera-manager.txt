@@ -1,0 +1,132 @@
+https://jingyan.baidu.com/article/046a7b3ebe6818f9c27fa9ef.html
+
+http://blog.51cto.com/emg2012/1614537
+
+
+
+https://blog.csdn.net/wh211212/article/details/78743191
+https://blog.csdn.net/bobpen/article/details/78272877
+192.168.1.63 master63.cn master63
+
+192.168.1.62 node62.cn node62
+192.168.1.61 node61.cn node61
+ssh-keygen -t rsa
+ssh-copy-id 192.168.1.61
+ssh-copy-id -p 10022 192.168.1.62
+ssh-copy-id -p 10024 192.168.1.63
+
+# 设置swap参数
+echo never > /sys/kernel/mm/transparent_hugepage/defrag  #建议写到开启启动新里
+
+sysctl -w vm.swappiness=0  # 建议写进sysctl.conf
+
+# 设置ntp同步服务器时间
+
+*/2 * * * * /usr/sbin/ntpdate 0.cn.pool.ntp.org >> /dev/null 2>&1
+
+
+
+
+
+
+
+删除旧版本mariadb 
+yum -y remove mariadb*
+rm -rf /var/lib/mysql/*
+
+yum remove mysql-community-server -y
+
+yum 安装mysql5.7的方法：
+CentOS 7版本下载
+[root@xuegod63 ~]#rpm -Uvh https://repo.mysql.com//yum/mysql-5.7-community/el/7/x86_64/mysql57-community-release-el7-10.noarch.rpm
+[root@xuegod63 ~]#yum list  #刷新yum源缓存
+[root@xuegod63 ~]#yum -y install mysql-community-server  #安装mysql5.7
+
+mysql-community-server mysql-community-client
+
+yum -y reinstall mysql-community-server
+[root@xuegod63 ~]#systemctl start mysqld  #启动mysql会生成临时密码
+
+# grep "password" /var/log/mysqld.log 命令获取MySQL的临时密码
+
+[root@xuegod63 ~]# mysql -uroot -p'&B=o4Fp!Rq_X'  #注意临时密码要引号
+用该密码登录到服务端后，必须马上修改密码，不然操作查询时报错误
+刚开始设置的密码必须符合长度，且必须含有数字，小写或大写字母，特殊字符。
+
+如果想设置简单密码，如下操作：
+MariaDB [xuegod]> set global validate_password_policy=0;  #定义复杂度
+MariaDB [xuegod]> set global validate_password_length=1;  #定义长度 默认是8
+MariaDB [xuegod]>set password for 'root'@'localhost'=password('123456');
+MariaDB [xuegod]> flush privileges; 
+
+systemctl start mysqld && systemctl enbale mysqld
+
+方法二：在/etc/my.cnf
+validate-password=ON/OFF/FORCE/FORCE_PLUS_PERMANENT   #决定是否使用该插件(及强制/永久强制使用)。
+validate-password=OFF
+
+
+# 使用mysql数据库，提前安装好mysql
+
+# mysql -u root -p123456 -e "create database cmf DEFAULT CHARACTER SET utf8;"
+
+# mysql -u root -p123456 -e "GRANT ALL PRIVILEGES ON `cmf`.* TO 'cmf'@'localhost' IDENTIFIED BY 'cmfpassword';"
+
+mysql -u root -p123456
+create database cmf DEFAULT CHARACTER SET utf8;
+GRANT ALL PRIVILEGES ON `cmf`.* TO 'cmf'@'localhost' IDENTIFIED BY 'cmfpassword';
+
+
+
+
+
+
+# 配置cloudera-cdh源和cloudera-manager源
+
+# cloudera-manager
+
+wget http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/cloudera-manager.repo
+
+
+# cloudera-cdh
+
+wget https://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/cloudera-cdh5.repo
+
+
+anaconda-ks.cfg  cloudera-cdh5.repo  cloudera-manager.repo
+[root@master63 ~]# mv cloudera-cdh5.repo  cloudera-manager.repo /etc/yum.repos.d/
+
+# 安装jdk和cloudera-manager
+
+yum install oracle-j2sdk1.7 -y
+
+yum install cloudera-manager-daemons cloudera-manager-server -y
+
+
+
+# /etc/init.d/cloudera-scm-server restart
+
+# 查看日志是否有报错，根据报错修改，然后再重新启动
+
+yum install psmisc #pstree安装
+
+tailf /var/log/cloudera-scm-server/cloudera-scm-server.log
+
+浏览器访问：http://192.168.1.137:7180，用户名密码：admin admin
+
+ls /usr/java/jdk1.7.0_67-cloudera
+
+
+
+在最后面增加：
+
+
+export JAVA_HOME=/usr/java/jdk1.7.0_67-cloudera
+export CLASSPATH=.:$CLASSPTAH:$JAVA_HOME/lib
+
+export PATH=$PATH:$JAVA_HOME/bin
+
+source /etc/profile   
+
+
+java -version  #查看JDK是否安装正确
