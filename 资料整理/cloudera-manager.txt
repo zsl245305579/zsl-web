@@ -1,3 +1,5 @@
+https://www.cloudera.com/documentation/manager/5-0-x/Cloudera-Manager-Installation-Guide/cm5ig_mysql.html
+
 
 
 https://www.cnblogs.com/Nervermore/p/4994309.html
@@ -59,7 +61,7 @@ MariaDB [xuegod]> set global validate_password_length=1;  #定义长度 默认是8
 MariaDB [xuegod]>set password for 'root'@'localhost'=password('123456');
 MariaDB [xuegod]> flush privileges; 
 
-systemctl start mysqld && systemctl enbale mysqld
+systemctl restart mysqld && systemctl enable mysqld
 
 方法二：在/etc/my.cnf
 validate-password=ON/OFF/FORCE/FORCE_PLUS_PERMANENT   #决定是否使用该插件(及强制/永久强制使用)。
@@ -96,6 +98,8 @@ wget https://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/cloudera-cdh5.repo
 anaconda-ks.cfg  cloudera-cdh5.repo  cloudera-manager.repo
 [root@master63 ~]# mv cloudera-cdh5.repo  cloudera-manager.repo /etc/yum.repos.d/
 
+yum install chkconfig python bind-utils psmisc libxslt zlib sqlite cyrus-sasl-plain cyrus-sasl-gssapi fuse fuse-libs redhat-lsb –y
+
 # 安装jdk和cloudera-manager
 
 yum install oracle-j2sdk1.7 -y
@@ -123,10 +127,27 @@ ls /usr/java/jdk1.7.0_67-cloudera
 
 export JAVA_HOME=/usr/java/jdk1.7.0_67-cloudera
 export CLASSPATH=.:$CLASSPTAH:$JAVA_HOME/lib
-
 export PATH=$PATH:$JAVA_HOME/bin
 
 source /etc/profile   
 
 
 java -version  #查看JDK是否安装正确
+
+
+/usr/share/cmf/schema/scm_prepare_database.sh mysql cmf -h master63 -ucmf -pcmfpassword --scm-host bdata31 scm scm scm
+
+cd /opt/cloudera-manager/cm-5.13.0/share/cmf/schema/
+./scm_prepare_database.sh mysql cloudera -h bdata31 -uroot -pdpibigdata --scm-host bdata31 scm scm scm
+依次对应数据库类型、数据库、数据库所在服务器、用户名、密码、cm service服务器
+看到
+All done, your SCM database is configured correctly!
+
+
+grant all on *.* to 'temp'@'%' identified by 'temp' with grant option;
+sudo /usr/share/cmf/schema/scm_prepare_database.sh mysql -h myhost1.sf.cloudera.com -utemp -ptemp --scm-host myhost2.sf.cloudera.com scm scm scm
+/usr/share/cmf/schema/scm_prepare_database.sh mysql -h master63.cn -utemp -ptemp --scm-host master63.cn scm scm scm
+mysql> drop user 'temp'@'%';
+
+yum install mysql-connector-java
+db-common-5.16.1.jar
