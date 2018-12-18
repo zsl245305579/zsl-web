@@ -1,11 +1,11 @@
-https://jingyan.baidu.com/article/046a7b3ebe6818f9c27fa9ef.html
-
-http://blog.51cto.com/emg2012/1614537
 
 
-
+https://www.cnblogs.com/Nervermore/p/4994309.html
+6.9
 https://blog.csdn.net/wh211212/article/details/78743191
 https://blog.csdn.net/bobpen/article/details/78272877
+https://www.linuxidc.com/Linux/2018-03/151491.htm
+
 192.168.1.63 master63.cn master63
 
 192.168.1.62 node62.cn node62

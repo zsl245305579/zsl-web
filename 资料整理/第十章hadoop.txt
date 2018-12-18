@@ -1,5 +1,6 @@
 https://blog.csdn.net/wh211212/article/details/78743191
 https://blog.csdn.net/Kim_Weir/article/details/79934308
+https://www.cnblogs.com/jasondan/p/4011153.html
 
 实验前期环境准备：
 三台机器上配置hosts文件，如下：
