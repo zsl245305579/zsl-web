@@ -1,15 +1,40 @@
+重点1
+https://blog.csdn.net/chenhai201/article/details/78856007
+https://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.14.1/RPMS/x86_64/
+
+https://www.cnblogs.com/oftenlin/p/4217670.html
+
+
+官网参考
 https://www.cloudera.com/documentation/manager/5-0-x/Cloudera-Manager-Installation-Guide/cm5ig_mysql.html
 
-
-
-https://www.cnblogs.com/Nervermore/p/4994309.html
-6.9
+6.9#便捷但是信息不全
 https://blog.csdn.net/wh211212/article/details/78743191
-https://blog.csdn.net/bobpen/article/details/78272877
-https://www.linuxidc.com/Linux/2018-03/151491.htm
+https://www.cnblogs.com/Nervermore/p/4994309.html #简单参考
+
+https://www.linuxidc.com/Linux/2018-03/151491.htm 简单参考
+
+
+jdk1.7下载
+http://www.oracle.com/technetwork/java/java-archive-downloads-javase7-521261.html （jdk1.7.0_80）
+cm软件包下载离线安装的时候用（oracle-j2sdk1.7-1.7.0+update67-1.x86_64.rpm） 
+http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.14.1/RPMS/x86_64/
+
+重要安装包（不操作会报错）
+mysql-connector-java-5.1.46.tar.gz #解压mysql-connector-java-5.1.46-bin.jar放入/usr/share/java/(如不存在则创建),并重命名为:mysql-connector-java.jar
+
+
+rpm -e jdk-1.6.0_31-fcs.x86_64 #卸载旧版安装新版（版本不匹配会报错）
+jdk-7u80-linux-x64.rpm  #rpm -ivh jdk-7u80-linux-x64.rpm 注意和版本要匹配
+
+[root@master63 ~]# rpm -qa | grep jdk-  #查看安装
+jdk-1.7.0_80-fcs.x86_64
+
+oracle-j2sdk1.7-1.7.0+update67-1.x86_64.rpm  #rpm安装或者yum安装cm用
+
+
 
 192.168.1.63 master63.cn master63
-
 192.168.1.62 node62.cn node62
 192.168.1.61 node61.cn node61
 ssh-keygen -t rsa
@@ -18,18 +43,14 @@ ssh-copy-id -p 10022 192.168.1.62
 ssh-copy-id -p 10024 192.168.1.63
 
 # 设置swap参数
-echo never > /sys/kernel/mm/transparent_hugepage/defrag  #建议写到开启启动新里
+[root@master63 ~]# cat /sys/kernel/mm/transparent_hugepage/defrag
+[always] madvise never                           #建议写到开启启动新里
 
 sysctl -w vm.swappiness=0  # 建议写进sysctl.conf
 
 # 设置ntp同步服务器时间
 
 */2 * * * * /usr/sbin/ntpdate 0.cn.pool.ntp.org >> /dev/null 2>&1
-
-
-
-
-
 
 
 删除旧版本mariadb 
@@ -68,36 +89,21 @@ validate-password=ON/OFF/FORCE/FORCE_PLUS_PERMANENT   #决定是否使用该插件(及强制
 validate-password=OFF
 
 
-# 使用mysql数据库，提前安装好mysql
-
-# mysql -u root -p123456 -e "create database cmf DEFAULT CHARACTER SET utf8;"
-
-# mysql -u root -p123456 -e "GRANT ALL PRIVILEGES ON `cmf`.* TO 'cmf'@'localhost' IDENTIFIED BY 'cmfpassword';"
-
-mysql -u root -p123456
-create database cmf DEFAULT CHARACTER SET utf8;
-GRANT ALL PRIVILEGES ON `cmf`.* TO 'cmf'@'localhost' IDENTIFIED BY 'cmfpassword';
-
-
-
-
-
 
 # 配置cloudera-cdh源和cloudera-manager源
 
 # cloudera-manager
 
-wget http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/cloudera-manager.repo
-
+wget http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/cloudera-manager.repo
 
 # cloudera-cdh
-
-wget https://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/cloudera-cdh5.repo
+wget https://archive.cloudera.com/cdh5/redhat/7/x86_64/cdh/cloudera-cdh5.repo
 
 
 anaconda-ks.cfg  cloudera-cdh5.repo  cloudera-manager.repo
 [root@master63 ~]# mv cloudera-cdh5.repo  cloudera-manager.repo /etc/yum.repos.d/
 
+安装依赖不知道是否需要但是安装上吧
 yum install chkconfig python bind-utils psmisc libxslt zlib sqlite cyrus-sasl-plain cyrus-sasl-gssapi fuse fuse-libs redhat-lsb –y
 
 # 安装jdk和cloudera-manager
@@ -107,47 +113,34 @@ yum install oracle-j2sdk1.7 -y
 yum install cloudera-manager-daemons cloudera-manager-server -y
 
 
-
-# /etc/init.d/cloudera-scm-server restart
-
-# 查看日志是否有报错，根据报错修改，然后再重新启动
-
-yum install psmisc #pstree安装
-
-tailf /var/log/cloudera-scm-server/cloudera-scm-server.log
-
-浏览器访问：http://192.168.1.137:7180，用户名密码：admin admin
-
-ls /usr/java/jdk1.7.0_67-cloudera
-
-
-
 在最后面增加：
-
-
-export JAVA_HOME=/usr/java/jdk1.7.0_67-cloudera
+rpm -ivh jdk-7u80-linux-x64.rpm
+export JAVA_HOME=/usr/java/jdk1.7.0_80
 export CLASSPATH=.:$CLASSPTAH:$JAVA_HOME/lib
 export PATH=$PATH:$JAVA_HOME/bin
 
 source /etc/profile   
-
-
 java -version  #查看JDK是否安装正确
 
 
-/usr/share/cmf/schema/scm_prepare_database.sh mysql cmf -h master63 -ucmf -pcmfpassword --scm-host bdata31 scm scm scm
 
-cd /opt/cloudera-manager/cm-5.13.0/share/cmf/schema/
-./scm_prepare_database.sh mysql cloudera -h bdata31 -uroot -pdpibigdata --scm-host bdata31 scm scm scm
-依次对应数据库类型、数据库、数据库所在服务器、用户名、密码、cm service服务器
-看到
-All done, your SCM database is configured correctly!
+# 使用mysql数据库，提前安装好mysql 授权账号和登录密码
+
+mysql -u root -p123456
+create database cmf DEFAULT CHARACTER SET utf8;
+GRANT ALL PRIVILEGES ON `cmf`.* TO 'cmf'@'localhost' IDENTIFIED BY 'cmfpassword';
+
+cmf cmf cmfpassword
+
+/usr/share/cmf/schema/scm_prepare_database.sh -h localhost mysql cmf cmf cmfpassword #配置数据库连接
+
+cmf cmf cmfpassword
+
+# /etc/init.d/cloudera-scm-server restart
+
+# 查看日志是否有报错，根据报错修改，然后再重新启动
+tailf /var/log/cloudera-scm-server/cloudera-scm-server.log
+
+浏览器访问：http://192.168.1.63:7180，用户名密码：admin admin
 
 
-grant all on *.* to 'temp'@'%' identified by 'temp' with grant option;
-sudo /usr/share/cmf/schema/scm_prepare_database.sh mysql -h myhost1.sf.cloudera.com -utemp -ptemp --scm-host myhost2.sf.cloudera.com scm scm scm
-/usr/share/cmf/schema/scm_prepare_database.sh mysql -h master63.cn -utemp -ptemp --scm-host master63.cn scm scm scm
-mysql> drop user 'temp'@'%';
-
-yum install mysql-connector-java
-db-common-5.16.1.jar
