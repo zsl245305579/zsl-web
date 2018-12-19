@@ -1,0 +1,34 @@
+metastore
+mysql -h master63.cn -uhive -pAniuhive123.
+
+
+hue hue Aniuhue123.
+
+rman  rman Aniurman123.
+oos oos Aniuoos123.
+
+create database metastore DEFAULT CHARACTER SET utf8;
+grant all on metastore.* TO 'hive'@'%' IDENTIFIED BY 'Aniuhive123.';
+
+create database amon DEFAULT CHARACTER SET utf8;
+grant all on amon.* TO 'amon'@'%' IDENTIFIED BY 'Aniuamon123.';
+
+create database hue DEFAULT CHARACTER SET utf8;
+grant all on hue.* TO 'hue'@'%' IDENTIFIED BY 'Aniuhue123.';
+
+create database rman DEFAULT CHARACTER SET utf8;
+grant all on rman.* TO 'rman'@'%' IDENTIFIED BY 'Aniurman123.';
+
+create database navms DEFAULT CHARACTER SET utf8;
+grant all on navms.* TO 'navms'@'%' IDENTIFIED BY 'Aniunavms123.';
+
+create database nas DEFAULT CHARACTER SET utf8;
+grant all on nas.* TO 'nas'@'%' IDENTIFIED BY 'Aniunas123.';
+
+create database oos DEFAULT CHARACTER SET utf8;
+grant all on oos.* TO 'oos'@'%' IDENTIFIED BY 'Aniuoos123.';
+
+
+hdfsπ“‘ÿ
+https://cloud.tencent.com/developer/article/1078538
+
