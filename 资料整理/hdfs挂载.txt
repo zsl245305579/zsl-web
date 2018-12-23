@@ -32,3 +32,11 @@ grant all on oos.* TO 'oos'@'%' IDENTIFIED BY 'Aniuoos123.';
 hdfsπ“‘ÿ
 https://cloud.tencent.com/developer/article/1078538
 
+
+
+
+
+metastore hive Aniuhive123.
+hue hue Aniuhue123.
+
+oos oos Aniuoos123.

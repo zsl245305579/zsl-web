@@ -21,7 +21,12 @@ cm软件包下载离线安装的时候用（oracle-j2sdk1.7-1.7.0+update67-1.x86_64.rpm）
 http://archive.cloudera.com/cm5/redhat/7/x86_64/cm/5.14.1/RPMS/x86_64/
 
 重要安装包（不操作会报错）
-mysql-connector-java-5.1.46.tar.gz #解压mysql-connector-java-5.1.46-bin.jar放入/usr/share/java/(如不存在则创建),并重命名为:mysql-connector-java.jar
+下载链接https://cdn.mysql.com//Downloads/Connector-J/mysql-connector-java-5.1.46.tar.gz
+下载mysql-connector-java.jar,并保存到所有主机的/usr/share/java目录下
+
+mysql-connector-java-5.1.46.tar.gz #解压mysql-connector-java-5.1.46.tar.gz 
+把mysql-connector-java-5.1.46-bin.jar放入/usr/share/java/(如不存在则创建),
+并重命名为:mysql-connector-java.jar
 
 
 rpm -e jdk-1.6.0_31-fcs.x86_64 #卸载旧版安装新版（版本不匹配会报错）
@@ -142,5 +147,48 @@ cmf cmf cmfpassword
 tailf /var/log/cloudera-scm-server/cloudera-scm-server.log
 
 浏览器访问：http://192.168.1.63:7180，用户名密码：admin admin
+
+
+
+将CDH安装包移动主节点的/opt/cloudera/parcel-repo/目录下
+
+mv CDH-5.14.4-1.cdh5.14.4.p0.3-el7.parcel CDH-5.14.4-1.cdh5.14.4.p0.3-el7.parcel.sha1 /opt/cloudera/parcel-repo/
+mv /opt/cloudera/parcel-repo/CDH-5.14.4-1.cdh5.14.4.p0.3-el7.parcel.sha1 /opt/cloudera/parcel-repo/CDH-5.14.4-1.cdh5.14.4.p0.3-el7.parcel.sha
+
+
+
+create database metastore DEFAULT CHARACTER SET utf8;
+
+grant all on metastore.* TO 'hive'@'%' IDENTIFIED BY 'Aniuhive123.';
+
+
+create database amon DEFAULT CHARACTER SET utf8;
+
+grant all on amon.* TO 'amon'@'%' IDENTIFIED BY 'Aniuamon123.';
+
+
+create database hue DEFAULT CHARACTER SET utf8;
+
+grant all on hue.* TO 'hue'@'%' IDENTIFIED BY 'Aniuhue123.';
+
+
+create database rman DEFAULT CHARACTER SET utf8;
+
+grant all on rman.* TO 'rman'@'%' IDENTIFIED BY 'Aniurman123.';
+
+
+create database navms DEFAULT CHARACTER SET utf8;
+
+grant all on navms.* TO 'navms'@'%' IDENTIFIED BY 'Aniunavms123.';
+
+
+create database nas DEFAULT CHARACTER SET utf8;
+
+grant all on nas.* TO 'nas'@'%' IDENTIFIED BY 'Aniunas123.';
+
+
+create database oos DEFAULT CHARACTER SET utf8;
+
+grant all on oos.* TO 'oos'@'%' IDENTIFIED BY 'Aniuoos123.';
 
 

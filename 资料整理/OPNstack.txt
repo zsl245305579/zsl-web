@@ -1,0 +1,24 @@
+rm /etc/localtime #É¾³ýlink
+ln -vs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime #Èí¼þlink
+yum install ntpdate -y
+ntpdate time.nist.gov
+
+
+scp -P 10022 /etc/hosts root@node62.cn:/etc/hosts
+
+scp /etc/hosts root@node61.cn:/etc/hosts
+
+
+ssh root@103.63.2.188
+
+root / !@#cY82aPY@683
+
+Bt-Panel: http://103.63.2.188:8888
+username: gtns0ptj
+password: 364e4039
+
+ftp://103.63.2.188:21
+root
+ib3FwLRjwE
+
+
