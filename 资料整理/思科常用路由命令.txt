@@ -1,0 +1,393 @@
+新设备配置内容：
+1. interface vlan 1 的ip,gateway
+conf t
+int vlan 1
+ip address xx.xx.xx.xx 255.255.255.0
+ip default-gateway ip-address
+no shutdown
+exit
+2.en的密码
+3.line vty 0-4 telnet的密码
+4.wr存盘
+show interface vlan 1
+show run
+将F0/1-10端口加入到VLAN20中,对应以下命令
+interface range f0/1 -10
+switchport mode acccess
+switchport access vlan 20
+注意,f0/1后面有个空格,然后才是-10
+
+cisco 2950 常用配置命令
+产品相关命令
+1、配置IP地址
+     交换机要能够被网管，必须给它标识一个管理IP地址，默认情况下CISCO交换机的VLAN 1为管理VLAN，为该VLAN配上IP 地址，交换机就可以被网管了。命令如下：
+     a、进入全局模式: Switch#configure terminal
+     b、进入VLAN 1接口模式:Switch(config)#interface vlan 1
+     c、配置管理IP地址:Switch(config-if) # ip address [A.B.C.D] [mask]
+     如果当前VLAN 不是管理VLAN ，只需要将上面第b处命令的vlan的号码换成管理VLAN的号码即可。
+2、打开SNMP协议
+     a、进入全局模式: Switch#configure terminal
+     b、配置只读的Community，产品默认的只读Community名为public
+         Switch(config)#snmp-server community public ro
+     c、配置可写的Community，产品默认的可写Community名为private
+         Switch(config)#snmp-server community private rw
+3、更改SNMP的Community密码
+     a、将设备分组，并使能支持的各种SNMP版本
+         Switch(config)#snmp-server group qycx123 v1
+        Switch(config)#snmp-server group qycx 123 v2c
+         Switch(config)#snmp-server group qycx123 v3 noauth
+     b、分别配置只读和可写community 如：
+         Switch(config)#snmp-server community qycx123 ro
+         Switch(config)#snmp-server community qycx123 rw
+4、保存交换机配置
+         Switch#copy run start
+常用命令
+1、设置交换机密码
+     a、更改远程TELNNET密码
+         Switch#configure terminal
+         Switch(config)#line vty 0 4
+         Switch(config-line)#password qycx123
+         Switch(config-line)#login
+         Switch(config-line)#exit
+     b、更改进入全局配置模式时的密码
+         Switch#configure terminal
+         Switch(config)#enable secret qycx123
+2、创建并划分VLAN
+      a、创建VLAN
+         Switch#vlan database
+         Switch（vlan）#vlan 99 name office
+          (创建vlan 99 并命名为office)
+       b、将端口划分至vlan
+         Switch(config)#interface fastEthernet 0/8
+         Switch(config-if)#switchport mode access
+          Switch(config-if)#switchport access vlan 99
+         (将8号快速以太口划分至vlan 99)
+3、常用调试命令
+        a、显示所有配置命令：Switch#show run
+        b、显示所有接口状态：Switch#show ip int brief
+        c、显示所有VLAN的信息：Switch#show vlan brief
+
+交换机支持的命令
+
+1. linux 命令：
+PCA login: root ；使用root用户
+password: linux ；口令是linux
+# shutdown -h now ；同init 0 关机
+# logout
+# login
+# ifconfig ；显示IP地址
+# ifconfig eth0 <ip address> netmask <netmask> ；设置IP地址
+# ifconfig eht0 <ip address> netmask <netmask> down ； 删除IP地址
+# route add 0.0.0.0 gw <ip>
+# route del 0.0.0.0 gw <ip>
+# route add default gw <ip> ；设置网关
+# route del default gw <ip> ；删除网关
+# route ；显示网关
+# ping <ip>
+# telnet <ip>
+
+2. 交换机支持的命令：
+交换机基本状态：
+switch: ；交换机的ROM状态
+rommon> ；路由器的ROM状态
+hostname> ；用户模式
+hostname# ；特权模式
+hostname(config)# ；全局配置模式
+hostname(config-if)# ；接口状态
+
+交换机口令设置：
+switch>enable ；进入特权模式
+switch#config terminal ；进入全局配置模式
+switch(config)#hostname <hostname> ；设置交换机的主机名
+switch(config)#enable secret xxx ；设置特权加密口令
+switch(config)#enable password xxa ；设置特权非密口令
+switch(config)#line console 0 ；进入控制台口
+switch(config-line)#line vty 0 4 ；进入虚拟终端
+switch(config-line)#login ；允许登录
+switch(config-line)#password xx ；设置登录口令xx
+switch#exit ；返回命令
+
+交换机VLAN设置：
+switch#vlan database ；进入VLAN设置
+switch(vlan)#vlan 2 ；建VLAN 2
+switch(vlan)#no vlan 2 ；删vlan 2
+switch(config)#int f0/1 ；进入端口1
+switch(config-if)#switchport access vlan 2 ；当前端口加入vlan 2
+switch(config-if)#switchport mode trunk ；设置为干线
+switch(config-if)#switchport trunk allowed vlan 1,2 ；设置允许的vlan
+switch(config-if)#switchport trunk encap dot1q ；设置vlan 中继
+switch(config)#vtp domain <name> ；设置发vtp域名
+switch(config)#vtp password <word> ；设置发vtp密码
+switch(config)#vtp mode server ；设置发vtp模式
+switch(config)#vtp mode client ；设置发vtp模式
+
+交换机设置IP地址：
+switch(config)#interface vlan 1 ；进入vlan 1
+switch(config-if)#ip address <IP> <mask> ；设置IP地址
+switch(config)#ip default-gateway <IP> ；设置默认网关
+switch#dir flash: ；查看闪存
+
+交换机显示命令：
+switch#write ；保存配置信息
+switch#show vtp ；查看vtp配置信息
+switch#show run ；查看当前配置信息
+switch#show vlan ；查看vlan配置信息
+switch#show interface ；查看端口信息
+switch#show int f0/0 ；查看指定端口信息
+
+
+3. 路由器支持的命令：
+路由器显示命令：
+router#show run ；显示配置信息
+router#show interface ；显示接口信息
+router#show ip route ；显示路由信息
+router#show cdp nei ；显示邻居信息
+router#reload 　 　 ；重新起动
+
+路由器口令设置：
+router>enable ；进入特权模式
+router#config terminal ；进入全局配置模式
+router(config)#hostname <hostname> ；设置交换机的主机名
+router(config)#enable secret xxx ；设置特权加密口令
+router(config)#enable password xxb ；设置特权非密口令
+router(config)#line console 0 ；进入控制台口
+router(config-line)#line vty 0 4 ；进入虚拟终端
+router(config-line)#login ；要求口令验证
+router(config-line)#password xx ；设置登录口令xx
+router(config)#(Ctrl+z) ； 返回特权模式
+router#exit ；返回命令
+
+路由器配置：
+router(config)#int s0/0 ；进入Serail接口
+router(config-if)#no shutdown ；激活当前接口
+router(config-if)#clock rate 64000 ；设置同步时钟
+router(config-if)#ip address <ip> <netmask> ；设置IP地址
+router(config-if)#ip address <ip> <netmask> second ；设置第二个IP
+router(config-if)#int f0/0.1 ；进入子接口
+router(config-***if.1)#ip address <ip> <netmask> ；设置子接口IP
+router(config-***if.1)#encapsulation dot1q <n> ；绑定vlan中继协议
+router(config)#config-register 0x2142 ；跳过配置文件
+router(config)#config-register 0x2102 ；正常使用配置文件
+router#reload ；重新引导
+
+路由器文件操作：
+router#copy running-config startup-config ；保存配置
+router#copy running-config tftp ；保存配置到tftp
+router#copy startup-config tftp ；开机配置存到tftp
+router#copy tftp flash: ；下传文件到flash
+router#copy tftp startup-config ；下载配置文件
+
+ROM状态：
+Ctrl+Break ；进入ROM监控状态
+rommon>confreg 0x2142 ；跳过配置文件
+rommon>confreg 0x2102 ；恢复配置文件
+rommon>reset ；重新引导
+rommon>copy xmodem:<sname> flash:<dname> ；从console传输文件
+Cisco 2960设置管理地址问题
+我这里有个2960,准备配置管理地址,配置应该没有问题,可是就是无法连通,在此台2960上也无法Ping通网关,相关配置如下
+interface GigabitEthernet0/2
+switchport mode trunk
+spanning-tree link-type point-to-point
+interface Vlan241
+ip address 192.168.241.53 255.255.255.0
+no ip redirects
+no ip unreachables
+no ip proxy-arp
+no ip route-cache
+!
+ip default-gateway 192.168.241.1
+交换机工作正常,但是使用Show inter vlan241,发现接口处于Down状态,使用No shutdown 命令也没有用,不知道怎么回事情?是不是和VTP有关?谢谢!
+网友1；
+方法两个：
+1、把你见vlan号给删除，给vlan1配置ip地址
+2、修改你配置vlan的native vlan
+网友2：
+cisco的vlan1默认为管理vlan，只要给它配各地址就行了
+网友3：
+1.show vlan看本交换机有没有VLAN241
+如果没有可以手工添加上去
+或者启用VTP学习
+2.show int g0/2 trunk信息
+网友4：
+1、show vlan brief 看一下有没有这个vlan
+2、如果数据vlan和管理vlan分开，看看上联的trunk起来没有
+网友5：
+29交换机管理VLAN默认就是VLAN1,你的问题有两种方法:
+1、取消VLAN241的IP地址
+interface vlan 1
+ip add 192.168.241.53 255.255.255.0
+2、是将VLAN241设置成管理VLAN
+interface vlan 241
+ip add 192.168.241.53 255.255.255.0
+management-----------是将该VLAN设置成管理VLAN
+你任选一种就可以的
+
+Cisco 2960交换机中如何绑定IP与MAC地址
+
+请问：在2960交换机中如何进行端口MAC地址绑定，并同时绑定IP与MAC地址？
+网友1：
+conf t
+arp 192.168.1.1 0000.1001.2200 arpa fa0/1
+网友2：
+IP地址与MAC地址的关系： IP地址是根据现在的IPv4标准指定的，不受硬件限制长度4个字节。而 MAC地址却是用网卡的物理地址，保存在网卡的EPROM里面，与硬件有关系，长度为6个字节。
+在交换式网络中，交换机维护一张MAC地址表，并根据MAC地址，将数据发送至目的计算机。 为什么要绑定MAC与IP 地址：IP地址的修改非常容易，而MAC地址存储在网卡的EEPROM中，而且网卡的MAC地址是唯一确定的。因此，为了防止内部人员进行非法IP盗用 (例如盗用权限更高人员的IP地址，以获得权限外的信息)，可以将内部网络的IP地址与MAC地址绑定，盗用者即使修改了IP地址，也因MAC地址不匹配而盗用失败:而且由于网卡MAC地址的唯一确定性，可以根据MAC地址查出使用该MAC地址的网卡，进而查出非法盗用者。
+在Cisco中有以下三种方案可供选择，方案1和方案2实现的功能是一样的，即在具体的交换机端口上绑定特定的主机的MAC地址（网卡硬件地址），方案3是在具体的交换机端口上同时绑定特定的主机的MAC地址（网卡硬件地址）和IP地址。
+1.方案1——基于端口的MAC地址绑定
+思科2950交换机为例，登录进入交换机，输入管理口令进入配置模式，敲入命令：
+Switch#config terminal
+＃进入配置模式
+Switch(config)# Interface fastethernet 0/1
+＃进入具体端口配置模式
+Switch(config-if)#Switchport port-secruity
+＃配置端口安全模式
+Switch(config-if )switchport port-security mac-address MAC(主机的MAC地址)
+＃配置该端口要绑定的主机的MAC地址
+Switch(config-if )no switchport port-security mac-address MAC(主机的MAC地址)
+＃删除绑定主机的MAC地址
+注意：
+以上命令设置交换机上某个端口绑定一个具体的MAC地址，这样只有这个主机可以使用网络，如果对该主机的网卡进行了更换或者其他PC机想通过这个端口使用网络都不可用，除非删除或修改该端口上绑定的MAC地址，才能正常使用。
+注意：
+以上功能适用于思科2950、3550、4500、6500系列交换机
+2.方案2——基于MAC地址的扩展访问列表
+Switch(config)Mac access-list extended MAC10
+＃定义一个MAC地址访问控制列表并且命名该列表名为MAC10
+Switch(config)permit host 0009.6bc4.d4bf any
+＃定义MAC地址为0009.6bc4.d4bf的主机可以访问任意主机
+Switch(config)permit any host 0009.6bc4.d4bf
+＃定义所有主机可以访问MAC地址为0009.6bc4.d4bf的主机
+Switch(config-if )interface Fa0/20
+#进入配置具体端口的模式
+Switch(config-if )mac access-group MAC10 in
+＃在该端口上应用名为MAC10的访问列表（即前面我们定义的访问策略）
+Switch(config)no mac access-list extended MAC10
+＃清除名为MAC10的访问列表
+此功能与应用一大体相同，但它是基于端口做的MAC地址访问控制列表限制，可以限定特定源MAC地址与目的地址范围。
+注意：
+以上功能在思科2950、3550、4500、6500系列交换机上可以实现，但是需要注意的是2950、3550需要交换机运行增强的软件镜像（Enhanced Image）。
+3.方案3——IP地址的MAC地址绑定
+只能将应用1或2与基于IP的访问控制列表组合来使用才能达到IP-MAC 绑定功能。
+Switch(config)Mac access-list extended MAC10
+＃定义一个MAC地址访问控制列表并且命名该列表名为MAC10
+Switch(config)permit host 0009.6bc4.d4bf any
+＃定义MAC地址为0009.6bc4.d4bf的主机可以访问任意主机
+Switch(config)permit any host 0009.6bc4.d4bf
+＃定义所有主机可以访问MAC地址为0009.6bc4.d4bf的主机
+Switch(config)Ip access-list extended IP10
+＃定义一个IP地址访问控制列表并且命名该列表名为IP10
+Switch(config)Permit 192.168.0.1 0.0.0.0 any
+＃定义IP地址为192.168.0.1的主机可以访问任意主机
+Permit any 192.168.0.1 0.0.0.0
+＃定义所有主机可以访问IP地址为192.168.0.1的主机
+Switch(config-if )interface Fa0/20
+#进入配置具体端口的模式
+Switch(config-if )mac access-group MAC10 in
+＃在该端口上应用名为MAC10的访问列表（即前面我们定义的访问策略）
+Switch(config-if )Ip access-group IP10 in
+＃在该端口上应用名为IP10的访问列表（即前面我们定义的访问策略）
+Switch(config)no mac access-list extended MAC10
+＃清除名为MAC10的访问列表
+Switch(config)no Ip access-group IP10 in
+＃清除名为IP10的访问列表
+上述所提到的应用1是基于主机MAC地址与交换机端口的绑定，方案2是基于MAC地址的访问控制列表，前两种方案所能实现的功能大体一样。如果要做到IP 与 MAC地址的绑定只能按照方案3来实现，可根据需求将方案1或方案2与IP访问控制列表结合起来使用以达到自己想要的效果。
+注意：以上功能在思科2950、3550、4500、6500系列交换机上可以实现，但是需要注意的是2950、3550需要交换机运行增强的软件镜像（Enhanced Image）。
+后注：从表面上看来，绑定MAC地址和IP地址可以防止内部IP地址被盗用，但实际上由于各层协议以及网卡驱动等实现技术，MAC地址与IP地址的绑定存在很大的缺陷，并不能真正防止内部IP地址被盗用。
+
+Cisco之line vty线路使用
+
+Cisco的设备管理有很多种方式,如Console、HTTP、TTY、VTY或其它网管软件，但我们远程管理较为常用的一种方式肯定是VTY方式。
+    VTY在Cisco的不同系列产品中，都有一定数量的VTY线路可用，但具体数目则不尽相同。有些路由器交换机产品只有五条线路可用（line vty 0 4），有些交换机路由器设备则提供了十多条，甚至达一千多条，但默认情况下不一定全部启用。如果您想看一下自己的设备具体支持多少条线路，只需在全局模式下使用命令show line ; show line vty 0 ?即可查看该设备支持多少条线路。
+VTY线路的启用/关闭：
+    VTY线路的启用只能按顺序进行，你不可能启用line vty 10，而不启用line vty 9。如果想启用line vty 9，那么你可以在全局模式（或line模式）下输入命令line vty 9 ，如：
+(config)#line vty 9
+    这样系统会自动启用前面的0-8线路。当然也可以直接输入line vty 0 9直接启用10条线路。
+如果不想开启这么多条线路供用户使用，那么只须在全局模式下使用no line vty m [n]命令就可以关闭第m后的线路，此时n这个数值可有可无，因为系统只允许开启连续的线路号，取消第m号线路会自动取消其后的所有线路。
+VTY线路的协议选用：
+  VTY线路支持多种协议：
+acercon Remote console for ACE-based blade
+lat      DEC LAT protocol
+mop      DEC MOP Remote Console Protocol
+nasi     NASI protocol
+pad      X.3 PAD
+rlogin   Unix rlogin protocol
+ssh      TCP/IP SSH protocol
+telnet   TCP/IP Telnet protocol
+udptn    UDPTN async via UDP protocol
+
+
+   在某一个接口上使用什么协议可以使用命令：transport {input|ouput}来进行定义：
+(config)#line vty 0
+(config-line)#transport ?   //查看支持哪种方式的协议定义
+input      Define which protocols to use when connecting to the terminal server
+output     Define which protocols to use for outgoing connections
+preferred Specify the preferred protocol to use
+
+(config-line)#transport input ?     //查看在输入方向上支持的协议
+acercon Remote console for ACE-based blade
+all      All protocols
+lat      DEC LAT protocol
+mop      DEC MOP Remote Console Protocol
+nasi     NASI protocol
+none     No protocols
+pad      X.3 PAD
+rlogin   Unix rlogin protocol
+ssh      TCP/IP SSH protocol
+telnet   TCP/IP Telnet protocol
+udptn    UDPTN async via UDP protocol
+(config-line)#transport output ?     //查看在输出方向上支持的协议
+acercon Remote console for ACE-based blade
+all      All protocols
+lat      DEC LAT protocol
+mop      DEC MOP Remote Console Protocol
+nasi     NASI protocol
+none     No protocols
+pad      X.3 PAD
+rlogin   Unix rlogin protocol
+ssh      TCP/IP SSH protocol
+telnet   TCP/IP Telnet protocol
+udptn    UDPTN async via UDP protocol
+(config-line)#transport preferred   //定义协议的优先次序
+查看某一线路当前支持的协议可以使用命令show line vty m：
+#show line vty 9
+   Tty Typ     Tx/Rx    A Modem Roty AccO AccI   Uses   Noise Overruns   Int
+    10 VTY              -    -      -    -    -      0       0     0/0       -
+Line 10, Location: "", Type: ""
+Length: 24 lines, Width: 80 columns
+Baud rate (TX/RX) is 9600/9600
+Status: No Exit Banner
+Capabilities: none
+Modem state: Idle
+Group codes:    0
+Special Chars: Escape Hold Stop Start Disconnect Activation
+                ^^x    none   -     -       none       
+Timeouts:      Idle EXEC    Idle Session   Modem Answer Session   Dispatch
+               00:10:00        never                        none     not set
+                            Idle Session Disconnect Warning
+                              never
+                            Login-sequence User Response
+                             00:00:30
+                            Autoselect Initial Wait
+                              not set
+Modem type is unknown.
+Session limit is not set.
+Time since activation: never
+Editing is enabled.
+History is enabled, history size is 10.
+DNS resolution in show commands is enabled
+Full user help is disabled
+Allowed input transports are lat pad mop telnet rlogin ssh nasi.
+Allowed output transports are lat pad mop telnet rlogin ssh nasi.
+Preferred transport is lat.
+No output characters are padded
+No special data dispatching characters
+VTY线路的使用：
+VTY线路启用后,并不能直接使用,必须对其进行下面简单的配置才允许用户进行登录。
+1、配置登录密码
+   如果想成功登录到设备，必须在line线路下使用命令password来定义登录密码，否则无法成功登录（注：如果全局已经启用了相关认证如AAA，则在此不必配置密码）
+注意:在此你配置的密码是保存在配置文件中的,即使你启用service password-encryption功能,它加密的方式也是一种可逆的加密,很容易破解,所以在使用过程中尽可能配置一个不同于特权模式中的密码。
+2、登录验证
+   默认情况下，在line vty线路中，默认情况下使用的是系统默认的登录方式(要看你是否在全局启用了AAA等)，如果你需要在登录时指定认证模式，你可以使用login authentication命令进行指定。如果你想在登录时不需要用户输入密码，则可以使用no lgoin命令进行指定（当然这很危险）
+特权模式的使用：
+通过VTY线路登录后，会进入用户模式，如果你需要进行特权模式，那么你必须配置登录特权模式的认证。
+使用案例：
+   不同的线路上，可以配置不同的协议，如在line vty 0上配置telnet，在line vty 1上配置ssh，这样当SSH用户登录时，系统会让line vty 0空闲，而使用line vty 1进行连接。
+应用：在line vty 0-1上配置使用telnet协议，使用动态访问列表，在网络中进行严格的控制，以便只有网络管理人员才可以使用特殊通信；在2-10上配置SSH协议，用来进行设备管理。 
