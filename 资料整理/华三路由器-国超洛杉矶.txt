@@ -1,0 +1,166 @@
+
+Warning: Telnet is not a secure protocol, and it is recommended to use Stelnet.
+
+Login authentication
+
+
+Username:gchao
+Password:
+Info: The max number of VTY users is 10, and the number
+      of current VTY users on line is 1.
+      The current login time is 2017-09-19 17:42:04+00:00.
+<S9312-S1-Netdc>dis ip r 45.43.226.178
+Route Flags: R - relay, D - download to fib
+------------------------------------------------------------------------------
+Routing Table : Public
+Summary Count : 1
+Destination/Mask    Proto   Pre  Cost      Flags NextHop         Interface
+
+  45.43.226.176/30  Direct  0    0           D   45.43.226.177   Vlanif2249
+
+<S9312-S1-Netdc>dis ip r 45.43.226.177
+Route Flags: R - relay, D - download to fib
+------------------------------------------------------------------------------
+Routing Table : Public
+Summary Count : 1
+Destination/Mask    Proto   Pre  Cost      Flags NextHop         Interface
+
+  45.43.226.177/32  Direct  0    0           D   127.0.0.1       Vlanif2249
+
+<S9312-S1-Netdc>dis cu int vlan 2249
+#
+interface Vlanif2249
+ ip address 45.43.226.177 255.255.255.252
+#
+return
+<S9312-S1-Netdc>dis cu int vlan 2249
+#
+interface Vlanif2249
+ ip address 45.43.226.177 255.255.255.252
+#
+return
+<S9312-S1-Netdc>dis
+<S9312-S1-Netdc>display ip rout
+<S9312-S1-Netdc>display ip routing-table 45.43.226.177
+Route Flags: R - relay, D - download to fib
+------------------------------------------------------------------------------
+Routing Table : Public
+Summary Count : 1
+Destination/Mask    Proto   Pre  Cost      Flags NextHop         Interface
+
+  45.43.226.177/32  Direct  0    0           D   127.0.0.1       Vlanif2249
+
+<S9312-S1-Netdc>display ip routing-table 45.43.226.178
+
+<S9312-S1-Netdc>display ip routing-table 45.43.226.177
+
+
+<S9312-S1-Netdc>display ip routing-table 45.43.226.178
+
+
+
+
+
+
+dis cu 查看所用命令
+
+display ip routing-table 查看所有路由表
+
+
+自己洛杉矶机房的规划的每一台机器都是一个独立vlan，vlan都已经规划好，在表格中有记录，每台机器都分配有一个/30的ip地址作为主ip，主ip需要在路由器上路由ip到指定的vlan下，才可以正常使用的，额外分配的其他ip地址通过静态路由的方式来路由给主ip。
+华为路由器路由ip教程如下：
+1.
+telnet 104.243.129.1 登陆路由器。 密码：guochao999 账号：gchao
+2.
+输入命令：<S9312-S1-Netdc>system-view  进入管理权限
+3.
+进入指定的vlan：[S9312-S1-Netdc]interface Vlanif 3040
+4.
+对主ip进行路由；网关                   掩码
+ip address 220.158.245.233           255.255.255.248
+
+undo ip address 220.158.245.233      255.255.255.248
+5.
+对额外ip地址添加静态路由。(在system-view下输入下面命令) 
+                   网段         掩码          主ip地址
+ip route-static 192.168.2.0 255.255.255.192 192.168.1.2 
+ip route-static 192.168.3.0 255.255.255.192 192.168.1.2 
+ip route-static 192.168.4.0 255.255.255.192 192.168.1.2 
+
+注意事项：
+查找ip地址在那个vlan下命令:display ip routing-table 220.158.245.234
+查找指定vlan下面的路由条目:display current-configuration interface Vlanif 3040
+删除添加的静态路由(在system-view下输入下面命令) 
+undo ip route-static 45.41.95.32 255.255.255.240 104.232.79.154
+undo ip route-static 45.41.92.32 255.255.255.240 104.232.79.154
+undo ip route-static 45.41.86.32 255.255.255.240 104.232.79.154
+undo ip route-static 45.41.87.32 255.255.255.240 104.232.79.154
+
+
+
+
+通过防火墙发现攻击之后，可以使用以下的命令在路由器上封掉被攻击的ip地址，路由器会自动将黑洞路由传递到he那边，并空路由。
+
+封ip命令
+ip route-static 104.243.130.218 255.255.255.255 null0
+bgp 26658
+ipv4-family unicast
+Network 104.243.130.218 255.255.255.255 route-policy blackhole
+
+
+******************************************************************
+解封ip命令
+
+bgp 26658
+ipv4-family unicast
+undo Network 104.243.130.218 255.255.255.255
+quit
+quit
+undo ip route-static 104.243.130.218 255.255.255.255 null0
+
+******************************************************************
+ip route-static 104.243.130.218 255.255.255.255 null 0 tag 999
+
+
+
+在vlan下面运行这个命令就可以了
+洛杉矶25端口开启的命令
+undo traffic-policy emailport inbound
+
+
+sys
+vlan XXXX
+undo traffic-policy emailport inbound
+
+
+洛杉矶被攻击后，登录104.243.128.1 空路由ip。
+
+登录路由器，输入system-view   进入系统视图模式，执行空路由命令
+ip route-static 104.232.97.28 255.255.255.255 null 0 tag 999
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
